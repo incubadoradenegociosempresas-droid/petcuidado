@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — PetCuidado</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --coral:#FF6B6B;--turquesa:#00D4AA;--morado:#7C3AED;
+  --amarillo:#FFD93D;--naranja:#FF9F43;--rosa:#FF8FAB;
+  --dark:#0F0F1E;--dark2:#1A1A2E;--dark3:#2D1B69;
+  --bg:#F0F0F8;--white:#ffffff;
+  --sidebar:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:#1A1A2E;overflow-x:hidden;}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,var(--dark),var(--dark3));display:flex;align-items:center;justify-content:center;z-index:1000;}
+.login-card{background:#fff;border-radius:28px;padding:3rem 2.5rem;max-width:400px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+.login-logo{text-align:center;font-family:'Righteous',cursive;font-size:1.6rem;color:var(--morado);margin-bottom:.3rem;}
+.login-logo span{color:var(--coral);}
+.login-sub{text-align:center;font-size:.82rem;color:#aaa;font-weight:700;margin-bottom:2rem;}
+.l-label{font-weight:800;font-size:.83rem;color:#555;margin-bottom:.4rem;display:block;}
+.l-input{width:100%;padding:.8rem 1rem;border:2px solid #e8e8e8;border-radius:12px;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:600;outline:none;margin-bottom:1.1rem;transition:border-color .2s;}
+.l-input:focus{border-color:var(--morado);}
+.l-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--morado),#9B59B6);color:#fff;border:none;border-radius:50px;font-weight:900;font-size:.97rem;cursor:pointer;box-shadow:0 8px 24px rgba(124,58,237,.35);transition:transform .2s;}
+.l-btn:hover{transform:translateY(-2px);}
+.l-err{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--coral);border-radius:10px;padding:.6rem .9rem;font-size:.82rem;font-weight:700;margin-bottom:1rem;display:none;}
+.l-err.show{display:block;}
+
+/* ── APP SHELL ── */
+#app{display:none;height:100vh;display:flex;flex-direction:column;}
+#app.visible{display:flex;}
+
+/* TOP BAR */
+.topbar{height:60px;background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0;z-index:100;}
+.tb-logo{font-family:'Righteous',cursive;font-size:1.3rem;color:#fff;display:flex;align-items:center;gap:.4rem;}
+.tb-logo span{color:var(--coral);}
+.tb-badge{background:var(--amarillo);color:var(--dark);font-size:.7rem;font-weight:900;padding:.15rem .6rem;border-radius:20px;margin-left:.3rem;}
+.tb-right{display:flex;align-items:center;gap:1.2rem;}
+.tb-notif{position:relative;cursor:pointer;}
+.tb-notif-icon{font-size:1.2rem;color:rgba(255,255,255,.7);}
+.tb-notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--coral);border-radius:50%;border:2px solid var(--dark);}
+.tb-user{display:flex;align-items:center;gap:.6rem;cursor:pointer;}
+.tb-avatar{width:34px;height:34px;border-radius:50%;background:var(--morado);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#fff;}
+.tb-name{color:rgba(255,255,255,.8);font-weight:700;font-size:.85rem;}
+.tb-logout{color:rgba(255,255,255,.4);font-size:.8rem;font-weight:700;cursor:pointer;padding:.3rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.1);transition:all .2s;}
+.tb-logout:hover{color:#fff;border-color:rgba(255,255,255,.3);}
+
+/* BODY */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--dark2);padding:1.2rem .8rem;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;flex-shrink:0;}
+.s-section{font-size:.68rem;font-weight:900;color:rgba(255,255,255,.25);letter-spacing:.08em;padding:.6rem .8rem .3rem;margin-top:.5rem;}
+.s-item{display:flex;align-items:center;gap:.65rem;padding:.65rem .9rem;border-radius:12px;color:rgba(255,255,255,.55);font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;position:relative;}
+.s-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.s-item.active{background:var(--morado);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.4);}
+.s-item .si{font-size:1rem;flex-shrink:0;width:20px;text-align:center;}
+.s-badge{margin-left:auto;background:var(--coral);color:#fff;font-size:.65rem;font-weight:900;padding:.1rem .5rem;border-radius:20px;}
+.s-footer{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:2rem;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ── CARDS ── */
+.page-title{font-family:'Righteous',cursive;font-size:1.55rem;color:var(--dark2);margin-bottom:1.6rem;display:flex;align-items:center;gap:.6rem;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.8rem;}
+.stat-card{background:#fff;border-radius:18px;padding:1.4rem;box-shadow:0 3px 14px rgba(0,0,0,.06);position:relative;overflow:hidden;transition:transform .25s;}
+.stat-card:hover{transform:translateY(-4px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:18px 18px 0 0;}
+.sc-coral::before{background:var(--coral);}
+.sc-morado::before{background:var(--morado);}
+.sc-turquesa::before{background:var(--turquesa);}
+.sc-amarillo::before{background:var(--amarillo);}
+.sc-naranja::before{background:var(--naranja);}
+.sc-rosa::before{background:var(--rosa);}
+.stat-icon{font-size:1.6rem;margin-bottom:.6rem;display:block;}
+.stat-val{font-family:'Righteous',cursive;font-size:2rem;line-height:1;color:var(--dark2);}
+.stat-label{font-size:.78rem;font-weight:700;color:#aaa;margin-top:.3rem;}
+.stat-change{font-size:.75rem;font-weight:800;margin-top:.4rem;}
+.change-up{color:var(--turquesa);}
+.change-dn{color:var(--coral);}
+
+/* GRID 2COL */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem;margin-bottom:1.5rem;}
+.grid3{display:grid;grid-template-columns:2fr 1fr;gap:1.3rem;margin-bottom:1.5rem;}
+
+/* CARDS */
+.card{background:#fff;border-radius:18px;padding:1.5rem;box-shadow:0 3px 14px rgba(0,0,0,.06);}
+.card-title{font-weight:900;font-size:.97rem;color:var(--dark2);margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;}
+.card-title-left{display:flex;align-items:center;gap:.5rem;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table.tbl{width:100%;border-collapse:collapse;}
+.tbl th{padding:.7rem .9rem;text-align:left;font-size:.75rem;font-weight:900;color:#bbb;border-bottom:2px solid #f0f0f0;white-space:nowrap;}
+.tbl td{padding:.8rem .9rem;font-size:.84rem;font-weight:600;border-bottom:1px solid #f8f8f8;color:var(--dark2);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#FAFAFE;}
+
+/* BADGES */
+.badge{padding:.22rem .75rem;border-radius:20px;font-size:.72rem;font-weight:800;white-space:nowrap;display:inline-block;}
+.b-g{background:rgba(255,107,107,.1);color:var(--coral);}
+.b-b{background:rgba(0,212,170,.1);color:#00A882;}
+.b-p{background:rgba(124,58,237,.1);color:var(--morado);}
+.b-a{background:rgba(255,159,67,.15);color:var(--naranja);}
+.b-pend{background:rgba(255,217,61,.2);color:#9B7500;}
+.b-conf{background:rgba(0,212,170,.1);color:#00A882;}
+.b-bloq{background:rgba(255,107,107,.1);color:var(--coral);}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.4rem;flex-shrink:0;}
+.sd-on{background:var(--turquesa);}
+.sd-off{background:#ddd;}
+.sd-bloq{background:var(--coral);}
+
+/* BUTTONS */
+.btn{padding:.45rem 1rem;border-radius:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.3rem;}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:var(--morado);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.3);}
+.btn-success{background:var(--turquesa);color:#fff;box-shadow:0 4px 12px rgba(0,212,170,.3);}
+.btn-danger{background:var(--coral);color:#fff;}
+.btn-warn{background:var(--amarillo);color:var(--dark2);}
+.btn-ghost{background:#f5f5f5;color:#666;}
+.btn-sm{padding:.32rem .75rem;font-size:.75rem;}
+
+/* PLAN SELECT */
+.plan-sel{padding:.35rem .6rem;border:2px solid #e8e8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;outline:none;background:#fff;transition:border-color .2s;}
+.plan-sel:focus{border-color:var(--morado);}
+
+/* SEARCH + FILTERS */
+.toolbar{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+.search-input{padding:.55rem 1rem;border:2px solid #e8e8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;outline:none;min-width:220px;transition:border-color .2s;}
+.search-input:focus{border-color:var(--morado);}
+.filter-sel{padding:.55rem .9rem;border:2px solid #e8e8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;outline:none;background:#fff;cursor:pointer;}
+.filter-sel:focus{border-color:var(--morado);}
+
+/* PROGRESS BAR */
+.progress-wrap{background:#f0f0f0;border-radius:50px;height:8px;overflow:hidden;margin-top:.4rem;}
+.progress-bar{height:100%;border-radius:50px;transition:width .6s ease;}
+
+/* ACTIVITY FEED */
+.activity-item{display:flex;align-items:flex-start;gap:.9rem;padding:.8rem 0;border-bottom:1px solid #f5f5f5;}
+.activity-item:last-child{border-bottom:none;}
+.act-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.act-i-green{background:rgba(0,212,170,.12);}
+.act-i-blue{background:rgba(124,58,237,.12);}
+.act-i-orange{background:rgba(255,159,67,.12);}
+.act-i-red{background:rgba(255,107,107,.12);}
+.act-text{flex:1;}
+.act-main{font-size:.85rem;font-weight:700;color:var(--dark2);}
+.act-sub{font-size:.77rem;color:#aaa;font-weight:600;margin-top:.1rem;}
+.act-time{font-size:.73rem;color:#ccc;font-weight:700;flex-shrink:0;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:24px;padding:2rem;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.25);}
+.modal-title{font-family:'Righteous',cursive;font-size:1.3rem;color:var(--dark2);margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:#aaa;line-height:1;}
+.modal-close:hover{color:var(--coral);}
+.m-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.m-field label{font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.35rem;}
+.m-val{font-weight:700;font-size:.9rem;color:var(--dark2);}
+.m-input{width:100%;padding:.65rem .9rem;border:2px solid #e8e8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:600;outline:none;}
+.m-input:focus{border-color:var(--morado);}
+.m-divider{height:1px;background:#f0f0f0;margin:1.2rem 0;}
+.pago-hist-item{display:flex;align-items:center;gap:.8rem;padding:.7rem;border-radius:10px;background:#f8f8f8;margin-bottom:.5rem;}
+.ph-monto{font-family:'Righteous',cursive;font-size:1.1rem;color:var(--morado);}
+.ph-info{flex:1;}
+.ph-plan{font-weight:800;font-size:.85rem;}
+.ph-fecha{font-size:.77rem;color:#aaa;font-weight:600;}
+.nota-input{width:100%;padding:.7rem .9rem;border:2px solid #e8e8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;resize:vertical;min-height:80px;outline:none;}
+.nota-input:focus{border-color:var(--morado);}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;height:240px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--dark2);color:#fff;padding:.9rem 1.5rem;border-radius:14px;font-weight:800;font-size:.88rem;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:999;transform:translateY(100px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:.6rem;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.toast-success{border-left:4px solid var(--turquesa);}
+.toast.toast-warn{border-left:4px solid var(--amarillo);}
+.toast.toast-error{border-left:4px solid var(--coral);}
+
+/* MRR CARD SPECIAL */
+.mrr-big{font-family:'Righteous',cursive;font-size:3rem;color:var(--morado);line-height:1;}
+.mrr-sub{font-size:.82rem;color:#aaa;font-weight:700;margin-top:.3rem;}
+.mrr-meta{display:flex;gap:1.5rem;margin-top:1.2rem;}
+.mrr-meta-item{text-align:center;}
+.mrr-meta-val{font-family:'Righteous',cursive;font-size:1.2rem;}
+.mrr-meta-label{font-size:.72rem;color:#aaa;font-weight:700;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .grid2,.grid3{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  :root{--sidebar:0px;}
+  .sidebar{display:none;}
+  .main{padding:1rem;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .tb-name{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🐾 Pet<span>Cuidado</span></div>
+    <div class="login-sub">Panel de Administración</div>
+    <div class="l-err" id="lErr">Credenciales incorrectas</div>
+    <label class="l-label">Correo</label>
+    <input class="l-input" type="email" id="lEmail" placeholder="admin@petcuidado.com" value="admin@petcuidado.com">
+    <label class="l-label">Contraseña</label>
+    <input class="l-input" type="password" id="lPass" placeholder="••••••••" value="admin2026">
+    <button class="l-btn" onclick="doLogin()">🔐 Entrar al panel</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">🐾 Pet<span>Cuidado</span><span class="tb-badge">ADMIN</span></div>
+    <div class="tb-right">
+      <div class="tb-notif">
+        <div class="tb-notif-icon">🔔</div>
+        <div class="tb-notif-dot"></div>
+      </div>
+      <div class="tb-user">
+        <div class="tb-avatar">JM</div>
+        <div class="tb-name">Jorge Meza</div>
+      </div>
+      <div class="tb-logout" onclick="doLogout()">Salir</div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="s-section">PRINCIPAL</div>
+      <div class="s-item active" onclick="goPanel('resumen',this)"><span class="si">📊</span>Resumen</div>
+      <div class="s-item" onclick="goPanel('usuarios',this)"><span class="si">👥</span>Usuarios</div>
+      <div class="s-item" onclick="goPanel('pagos',this)"><span class="si">💰</span>Pagos <span class="s-badge" id="pagosBadge">2</span></div>
+      <div class="s-section">ANÁLISIS</div>
+      <div class="s-item" onclick="goPanel('ingresos',this)"><span class="si">📈</span>Ingresos</div>
+      <div class="s-item" onclick="goPanel('actividad',this)"><span class="si">⚡</span>Actividad</div>
+      <div class="s-footer">
+        <div class="s-item" onclick="doLogout()"><span class="si">🚪</span>Cerrar sesión</div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- ══ RESUMEN ══ -->
+      <div id="panel-resumen" class="panel active">
+        <div class="page-title">📊 Resumen general</div>
+
+        <div class="stats-row">
+          <div class="stat-card sc-morado">
+            <span class="stat-icon">👥</span>
+            <div class="stat-val" id="s-total">6</div>
+            <div class="stat-label">Usuarios totales</div>
+            <div class="stat-change change-up">↑ +2 esta semana</div>
+          </div>
+          <div class="stat-card sc-turquesa">
+            <span class="stat-icon">💰</span>
+            <div class="stat-val" id="s-mrr">$417</div>
+            <div class="stat-label">MRR actual</div>
+            <div class="stat-change change-up">↑ +$169 vs mes pasado</div>
+          </div>
+          <div class="stat-card sc-amarillo">
+            <span class="stat-icon">⭐</span>
+            <div class="stat-val" id="s-pagos">2</div>
+            <div class="stat-label">Pagos pendientes</div>
+            <div class="stat-change change-dn">⚠ Requieren atención</div>
+          </div>
+          <div class="stat-card sc-coral">
+            <span class="stat-icon">🆓</span>
+            <div class="stat-val" id="s-gratis">3</div>
+            <div class="stat-label">Plan Gratuito</div>
+            <div class="stat-change" style="color:#aaa;">Conversión objetivo: 30%</div>
+          </div>
+          <div class="stat-card sc-naranja">
+            <span class="stat-icon">📈</span>
+            <div class="stat-val">$5,004</div>
+            <div class="stat-label">ARR proyectado</div>
+            <div class="stat-change change-up">↑ Basado en MRR actual</div>
+          </div>
+          <div class="stat-card sc-rosa">
+            <span class="stat-icon">🔄</span>
+            <div class="stat-val">0%</div>
+            <div class="stat-label">Churn rate</div>
+            <div class="stat-change change-up">✓ Sin cancelaciones</div>
+          </div>
+        </div>
+
+        <div class="grid3">
+          <!-- GRÁFICA MRR -->
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">📈 MRR mensual</div></div>
+            <div class="chart-wrap"><canvas id="chartMRR"></canvas></div>
+          </div>
+          <!-- DISTRIBUCIÓN PLANES -->
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">🥧 Distribución de planes</div></div>
+            <div class="chart-wrap"><canvas id="chartPlanes"></canvas></div>
+            <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.5rem;">
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🔴 Gratuito</span><span style="color:#aaa;">3 usuarios</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟢 Básico</span><span style="color:#aaa;">1 usuario · $79</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟣 Protector</span><span style="color:#aaa;">2 usuarios · $338</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <!-- ACTIVIDAD RECIENTE -->
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">⚡ Actividad reciente</div><button class="btn btn-ghost btn-sm" onclick="goPanel('actividad',document.querySelector('.s-item:nth-child(7)'))">Ver todo</button></div>
+            <div id="actFeed">
+              <div class="activity-item"><div class="act-icon act-i-green">💰</div><div class="act-text"><div class="act-main">Pago confirmado · Carlos Ruiz</div><div class="act-sub">Plan Básico $79 activado</div></div><div class="act-time">hace 1h</div></div>
+              <div class="activity-item"><div class="act-icon act-i-blue">👤</div><div class="act-text"><div class="act-main">Nuevo registro · María López</div><div class="act-sub">Plan Gratuito</div></div><div class="act-time">hace 3h</div></div>
+              <div class="activity-item"><div class="act-icon act-i-orange">⭐</div><div class="act-text"><div class="act-main">Transferencia recibida · Ana M.</div><div class="act-sub">$169 · Plan Protector · Pendiente</div></div><div class="act-time">hace 5h</div></div>
+              <div class="activity-item"><div class="act-icon act-i-blue">👤</div><div class="act-text"><div class="act-main">Nuevo registro · Pedro Soto</div><div class="act-sub">Plan Gratuito</div></div><div class="act-time">ayer</div></div>
+              <div class="activity-item"><div class="act-icon act-i-green">💰</div><div class="act-text"><div class="act-main">Pago confirmado · Laura V.</div><div class="act-sub">Plan Protector $169 activado</div></div><div class="act-time">ayer</div></div>
+            </div>
+          </div>
+          <!-- MRR DETALLE -->
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">💎 Ingresos del mes</div></div>
+            <div class="mrr-big">$417</div>
+            <div class="mrr-sub">MRR Junio 2026</div>
+            <div class="mrr-meta">
+              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--turquesa);">$79</div><div class="mrr-meta-label">Plan Básico</div></div>
+              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--morado);">$338</div><div class="mrr-meta-label">Plan Protector</div></div>
+              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--coral);">$0</div><div class="mrr-meta-label">Gratuito</div></div>
+            </div>
+            <div class="m-divider"></div>
+            <div style="font-size:.82rem;font-weight:700;color:#888;margin-bottom:.6rem;">Objetivo mes: $1,000 MRR</div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:41.7%;background:linear-gradient(90deg,var(--morado),var(--turquesa));"></div></div>
+            <div style="font-size:.75rem;color:#aaa;font-weight:700;margin-top:.4rem;">41.7% del objetivo</div>
+            <div class="m-divider"></div>
+            <div style="font-size:.82rem;font-weight:700;color:#888;">Necesitas: <strong style="color:var(--morado);">7 usuarios Básico</strong> o <strong style="color:var(--morado);">4 Protector</strong> para llegar a $1,000 MRR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ USUARIOS ══ -->
+      <div id="panel-usuarios" class="panel">
+        <div class="page-title">👥 Gestión de usuarios</div>
+        <div class="toolbar">
+          <input class="search-input" placeholder="🔍 Buscar por nombre o correo..." oninput="filterUsers(this.value)">
+          <select class="filter-sel" onchange="filterByPlan(this.value)">
+            <option value="">Todos los planes</option>
+            <option value="gratis">Gratuito</option>
+            <option value="basico">Básico</option>
+            <option value="protector">Protector</option>
+            <option value="anual">Anual</option>
+          </select>
+          <select class="filter-sel" onchange="filterByStatus(this.value)">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activos</option>
+            <option value="bloqueado">Bloqueados</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openNewUser()">+ Nuevo usuario</button>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table class="tbl" id="usersTable">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Plan actual</th>
+                  <th>Cambiar plan</th>
+                  <th>Estado</th>
+                  <th>Registro</th>
+                  <th>Último pago</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAGOS ══ -->
+      <div id="panel-pagos" class="panel">
+        <div class="page-title">💰 Control de pagos</div>
+        <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card sc-morado"><span class="stat-icon">💰</span><div class="stat-val">$417</div><div class="stat-label">Cobrado en junio</div></div>
+          <div class="stat-card sc-amarillo"><span class="stat-icon">⏳</span><div class="stat-val" id="pendCount">2</div><div class="stat-label">Pagos pendientes</div></div>
+          <div class="stat-card sc-turquesa"><span class="stat-icon">✅</span><div class="stat-val">3</div><div class="stat-label">Pagos confirmados</div></div>
+          <div class="stat-card sc-coral"><span class="stat-icon">📅</span><div class="stat-val">5</div><div class="stat-label">Total transacciones</div></div>
+        </div>
+
+        <!-- PENDIENTES -->
+        <div class="card" style="margin-bottom:1.3rem;">
+          <div class="card-title"><div class="card-title-left">⚠️ Pagos pendientes de confirmar</div><span class="badge b-pend" id="pendBadge">2 pendientes</span></div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="pendTable">
+              <thead><tr><th>Usuario</th><th>Monto</th><th>Plan solicitado</th><th>Fecha transferencia</th><th>Referencia</th><th>Acción</th></tr></thead>
+              <tbody id="pendTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="card">
+          <div class="card-title"><div class="card-title-left">✅ Historial de pagos confirmados</div></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Usuario</th><th>Monto</th><th>Plan</th><th>Fecha</th><th>Confirmado por</th></tr></thead>
+              <tbody id="histTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ INGRESOS ══ -->
+      <div id="panel-ingresos" class="panel">
+        <div class="page-title">📈 Análisis de ingresos</div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">📈 MRR últimos 6 meses</div></div>
+            <div class="chart-wrap" style="height:280px;"><canvas id="chartMRR2"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">👥 Nuevos usuarios por mes</div></div>
+            <div class="chart-wrap" style="height:280px;"><canvas id="chartUsers"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-left">🎯 Proyección de crecimiento</div></div>
+          <div class="chart-wrap" style="height:260px;"><canvas id="chartProyeccion"></canvas></div>
+        </div>
+        <div class="grid2" style="margin-top:1.3rem;">
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">💡 Escenarios de crecimiento</div></div>
+            <table class="tbl">
+              <thead><tr><th>Escenario</th><th>Usuarios</th><th>MRR</th><th>ARR</th></tr></thead>
+              <tbody>
+                <tr><td><span class="badge b-g">Actual</span></td><td>6</td><td>$417</td><td>$5,004</td></tr>
+                <tr><td><span class="badge b-b">Conservador</span></td><td>30</td><td>$2,850</td><td>$34,200</td></tr>
+                <tr><td><span class="badge b-p">Moderado</span></td><td>100</td><td>$9,500</td><td>$114,000</td></tr>
+                <tr><td><span class="badge b-a">Optimista</span></td><td>300</td><td>$28,500</td><td>$342,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title"><div class="card-title-left">📊 Métricas clave</div></div>
+            <div style="display:flex;flex-direction:column;gap:.9rem;">
+              <div><div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:800;margin-bottom:.3rem;"><span>ARPU (Ingreso por usuario)</span><span style="color:var(--morado);">$139/mes</span></div><div class="progress-wrap"><div class="progress-bar" style="width:60%;background:var(--morado);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:800;margin-bottom:.3rem;"><span>Conversión Gratuito → Pago</span><span style="color:var(--turquesa);">50%</span></div><div class="progress-wrap"><div class="progress-bar" style="width:50%;background:var(--turquesa);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:800;margin-bottom:.3rem;"><span>Objetivo MRR mensual</span><span style="color:var(--amarillo);">41.7%</span></div><div class="progress-wrap"><div class="progress-bar" style="width:41.7%;background:var(--amarillo);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:800;margin-bottom:.3rem;"><span>Retención (churn inverso)</span><span style="color:var(--turquesa);">100%</span></div><div class="progress-wrap"><div class="progress-bar" style="width:100%;background:var(--turquesa);"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ACTIVIDAD ══ -->
+      <div id="panel-actividad" class="panel">
+        <div class="page-title">⚡ Registro de actividad</div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-left">Todos los eventos</div></div>
+          <div id="fullActivity"></div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<!-- MODAL USUARIO -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitle">👤 Detalle de usuario</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><label>Nombre</label><div class="m-val" id="mNombre">—</div></div>
+      <div class="m-field"><label>Correo</label><div class="m-val" id="mEmail">—</div></div>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><label>Plan actual</label><div id="mPlan">—</div></div>
+      <div class="m-field"><label>Estado</label><div id="mEstado">—</div></div>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><label>Fecha de registro</label><div class="m-val" id="mFecha">—</div></div>
+      <div class="m-field"><label>Último pago</label><div class="m-val" id="mUltPago">—</div></div>
+    </div>
+    <div class="m-divider"></div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">Cambiar plan</label>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="cambiarPlanModal('gratis')">🆓 Gratuito</button>
+        <button class="btn btn-sm" style="background:rgba(0,212,170,.1);color:#00A882;" onclick="cambiarPlanModal('basico')">⭐ Básico</button>
+        <button class="btn btn-primary btn-sm" onclick="cambiarPlanModal('protector')">👑 Protector</button>
+        <button class="btn btn-sm" style="background:rgba(255,159,67,.15);color:var(--naranja);" onclick="cambiarPlanModal('anual')">🏆 Anual</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">Acceso a la cuenta</label>
+      <div style="display:flex;gap:.6rem;">
+        <button class="btn btn-success btn-sm" onclick="toggleBlock(false)">✓ Desbloquear</button>
+        <button class="btn btn-danger btn-sm" onclick="toggleBlock(true)">🚫 Bloquear acceso</button>
+      </div>
+    </div>
+    <div class="m-divider"></div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">📋 Historial de pagos</label>
+      <div id="mPagoHist"></div>
+    </div>
+    <div>
+      <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">📝 Notas internas</label>
+      <textarea class="nota-input" id="mNotas" placeholder="Notas sobre este usuario..."></textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:.5rem;" onclick="guardarNota()">Guardar nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const ADMIN = { email:'admin@petcuidado.com', pass:'admin2026' };
+
+let users = [
+  { id:1, nombre:'María López',    email:'maria@gmail.com',    plan:'gratis',    status:'activo',    fecha:'05/06/2026', ultimoPago:'—',         notas:'' },
+  { id:2, nombre:'Carlos Ruiz',    email:'carlos@hotmail.com', plan:'basico',    status:'activo',    fecha:'04/06/2026', ultimoPago:'04/06/2026', notas:'Pagó por SPEI, comprobante enviado por WA.' },
+  { id:3, nombre:'Ana Martínez',   email:'ana@gmail.com',      plan:'protector', status:'activo',    fecha:'02/06/2026', ultimoPago:'02/06/2026', notas:'' },
+  { id:4, nombre:'Pedro Soto',     email:'pedro@outlook.com',  plan:'gratis',    status:'bloqueado', fecha:'01/06/2026', ultimoPago:'—',          notas:'Cuenta bloqueada por comportamiento inapropiado.' },
+  { id:5, nombre:'Laura Vega',     email:'laura@gmail.com',    plan:'protector', status:'activo',    fecha:'31/05/2026', ultimoPago:'31/05/2026', notas:'' },
+  { id:6, nombre:'Diego Flores',   email:'diego@yahoo.com',    plan:'gratis',    status:'activo',    fecha:'30/05/2026', ultimoPago:'—',          notas:'' },
+];
+
+let pagosHist = [
+  { id:1, userId:2, nombre:'Carlos Ruiz',  email:'carlos@hotmail.com', monto:79,  plan:'basico',    fecha:'04/06/2026 08:30', ref:'SPEI-001234', status:'confirmado' },
+  { id:2, userId:3, nombre:'Ana Martínez', email:'ana@gmail.com',      monto:169, plan:'protector', fecha:'03/06/2026 14:15', ref:'SPEI-001198', status:'pendiente' },
+  { id:3, userId:5, nombre:'Laura Vega',   email:'laura@gmail.com',    monto:169, plan:'protector', fecha:'01/06/2026 11:00', ref:'SPEI-001102', status:'confirmado' },
+  { id:4, userId:6, nombre:'Diego Flores', email:'diego@yahoo.com',    monto:79,  plan:'basico',    fecha:'05/06/2026 07:00', ref:'SPEI-001280', status:'pendiente' },
+  { id:5, userId:1, nombre:'María López',  email:'maria@gmail.com',    monto:169, plan:'protector', fecha:'02/06/2026 09:45', ref:'SPEI-001155', status:'confirmado' },
+];
+
+let currentModal = null;
+const planNames = { gratis:'Gratuito', basico:'Básico', protector:'Protector', anual:'Anual' };
+const planBadge  = { gratis:'b-g', basico:'b-b', protector:'b-p', anual:'b-a' };
+
+// ── LOGIN ──
+function doLogin(){
+  const e = document.getElementById('lEmail').value.trim();
+  const p = document.getElementById('lPass').value;
+  const err = document.getElementById('lErr');
+  if(e === ADMIN.email && p === ADMIN.pass){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    initCharts();
+    renderUsers();
+    renderPagos();
+    renderActividad();
+  } else {
+    err.classList.add('show');
+  }
+}
+function doLogout(){
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('lPass').value = '';
+  document.getElementById('lErr').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ── NAVEGACIÓN ──
+function goPanel(id, el){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.s-item').forEach(i => i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  if(id==='ingresos') setTimeout(initCharts2, 100);
+}
+
+// ── RENDER USUARIOS ──
+function renderUsers(filtro='', planFiltro='', statusFiltro=''){
+  const tbody = document.getElementById('usersTbody');
+  const filtered = users.filter(u => {
+    const matchText = !filtro || u.nombre.toLowerCase().includes(filtro) || u.email.toLowerCase().includes(filtro);
+    const matchPlan = !planFiltro || u.plan === planFiltro;
+    const matchStatus = !statusFiltro || u.status === statusFiltro;
+    return matchText && matchPlan && matchStatus;
+  });
+  tbody.innerHTML = filtered.map(u => `
+    <tr data-id="${u.id}" data-plan="${u.plan}" data-status="${u.status}">
+      <td>
+        <div style="font-weight:800;">${u.nombre}</div>
+        <div style="font-size:.76rem;color:#aaa;">${u.email}</div>
+      </td>
+      <td><span class="badge ${planBadge[u.plan]}">${planNames[u.plan]}</span></td>
+      <td>
+        <select class="plan-sel" onchange="cambiarPlan(${u.id},this.value)">
+          ${['gratis','basico','protector','anual'].map(p=>`<option value="${p}" ${u.plan===p?'selected':''}>${planNames[p]}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <span class="status-dot ${u.status==='activo'?'sd-on':u.status==='bloqueado'?'sd-bloq':'sd-off'}"></span>
+        ${u.status.charAt(0).toUpperCase()+u.status.slice(1)}
+      </td>
+      <td>${u.fecha}</td>
+      <td>${u.ultimoPago}</td>
+      <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="openModal(${u.id})">👁 Ver</button>
+        ${u.status==='bloqueado'
+          ? `<button class="btn btn-success btn-sm" onclick="toggleStatus(${u.id})">✓ Desbloquear</button>`
+          : `<button class="btn btn-danger btn-sm" onclick="toggleStatus(${u.id})">🚫 Bloquear</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+let _planF='', _statusF='', _textF='';
+function filterUsers(v){ _textF=v.toLowerCase(); renderUsers(_textF,_planF,_statusF); }
+function filterByPlan(v){ _planF=v; renderUsers(_textF,_planF,_statusF); }
+function filterByStatus(v){ _statusF=v; renderUsers(_textF,_planF,_statusF); }
+
+function cambiarPlan(id, plan){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  const old = u.plan;
+  u.plan = plan;
+  if(plan!=='gratis' && u.ultimoPago==='—') u.ultimoPago = new Date().toLocaleDateString('es-MX');
+  renderUsers(_textF,_planF,_statusF);
+  updateSummaryStats();
+  showToast('success', `✓ Plan de ${u.nombre} cambiado a ${planNames[plan]}`);
+}
+
+function toggleStatus(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  u.status = u.status==='activo' ? 'bloqueado' : 'activo';
+  renderUsers(_textF,_planF,_statusF);
+  showToast(u.status==='bloqueado'?'warn':'success',
+    u.status==='bloqueado' ? `🚫 ${u.nombre} bloqueado` : `✓ ${u.nombre} desbloqueado`);
+}
+
+// ── MODAL ──
+function openModal(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  currentModal = u;
+  document.getElementById('modalTitle').textContent = '👤 ' + u.nombre;
+  document.getElementById('mNombre').textContent = u.nombre;
+  document.getElementById('mEmail').textContent   = u.email;
+  document.getElementById('mFecha').textContent   = u.fecha;
+  document.getElementById('mUltPago').textContent = u.ultimoPago;
+  document.getElementById('mPlan').innerHTML = `<span class="badge ${planBadge[u.plan]}">${planNames[u.plan]}</span>`;
+  document.getElementById('mEstado').innerHTML = `<span class="status-dot ${u.status==='activo'?'sd-on':'sd-bloq'}"></span>${u.status}`;
+  document.getElementById('mNotas').value = u.notas||'';
+  const pagos = pagosHist.filter(p=>p.userId===id);
+  document.getElementById('mPagoHist').innerHTML = pagos.length
+    ? pagos.map(p=>`<div class="pago-hist-item"><div class="ph-monto">$${p.monto}</div><div class="ph-info"><div class="ph-plan">${planNames[p.plan]} · Ref: ${p.ref}</div><div class="ph-fecha">${p.fecha}</div></div><span class="badge ${p.status==='confirmado'?'b-conf':'b-pend'}">${p.status}</span></div>`).join('')
+    : '<div style="color:#aaa;font-size:.84rem;font-weight:600;">Sin pagos registrados</div>';
+  document.getElementById('userModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('userModal').classList.remove('open'); currentModal=null; }
+function cambiarPlanModal(plan){
+  if(!currentModal) return;
+  cambiarPlan(currentModal.id, plan);
+  document.getElementById('mPlan').innerHTML = `<span class="badge ${planBadge[plan]}">${planNames[plan]}</span>`;
+  showToast('success',`✓ Plan actualizado a ${planNames[plan]}`);
+}
+function toggleBlock(block){
+  if(!currentModal) return;
+  currentModal.status = block ? 'bloqueado' : 'activo';
+  renderUsers(_textF,_planF,_statusF);
+  showToast(block?'warn':'success', block?`🚫 Usuario bloqueado`:`✓ Usuario desbloqueado`);
+}
+function guardarNota(){
+  if(!currentModal) return;
+  currentModal.notas = document.getElementById('mNotas').value;
+  showToast('success','📝 Nota guardada');
+}
+function openNewUser(){
+  showToast('warn','🔜 Alta de usuario manual — próximamente');
+}
+
+// ── PAGOS ──
+function renderPagos(){
+  const pend = pagosHist.filter(p=>p.status==='pendiente');
+  const conf = pagosHist.filter(p=>p.status==='confirmado');
+  document.getElementById('pendCount').textContent = pend.length;
+  document.getElementById('pagosBadge').textContent = pend.length;
+  document.getElementById('pendBadge').textContent = pend.length + ' pendiente'+(pend.length!==1?'s':'');
+  document.getElementById('pendTbody').innerHTML = pend.map(p=>`
+    <tr id="prow-${p.id}">
+      <td><div style="font-weight:800;">${p.nombre}</div><div style="font-size:.75rem;color:#aaa;">${p.email}</div></td>
+      <td><strong>$${p.monto}</strong></td>
+      <td><span class="badge ${planBadge[p.plan]}">${planNames[p.plan]}</span></td>
+      <td>${p.fecha}</td>
+      <td style="font-size:.78rem;color:#aaa;">${p.ref}</td>
+      <td style="display:flex;gap:.4rem;">
+        <button class="btn btn-success btn-sm" onclick="confirmarPago(${p.id})">✓ Confirmar y activar</button>
+        <button class="btn btn-danger btn-sm" onclick="rechazarPago(${p.id})">✗ Rechazar</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;color:#aaa;font-size:.85rem;padding:1.5rem;">✅ Sin pagos pendientes</td></tr>';
+  document.getElementById('histTbody').innerHTML = conf.map(p=>`
+    <tr>
+      <td><div style="font-weight:800;">${p.nombre}</div><div style="font-size:.75rem;color:#aaa;">${p.email}</div></td>
+      <td><strong>$${p.monto}</strong></td>
+      <td><span class="badge ${planBadge[p.plan]}">${planNames[p.plan]}</span></td>
+      <td>${p.fecha}</td>
+      <td>Admin</td>
+    </tr>
+  `).join('');
+}
+
+function confirmarPago(id){
+  const p = pagosHist.find(x=>x.id===id);
+  if(!p) return;
+  p.status = 'confirmado';
+  const u = users.find(x=>x.email===p.email);
+  if(u){ u.plan=p.plan; u.ultimoPago=new Date().toLocaleDateString('es-MX'); }
+  renderPagos();
+  renderUsers(_textF,_planF,_statusF);
+  updateSummaryStats();
+  showToast('success',`✓ Pago confirmado · ${p.nombre} → ${planNames[p.plan]}`);
+}
+
+function rechazarPago(id){
+  const p = pagosHist.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`¿Rechazar el pago de $${p.monto} de ${p.nombre}?`)) return;
+  pagosHist = pagosHist.filter(x=>x.id!==id);
+  renderPagos();
+  showToast('error',`✗ Pago de ${p.nombre} rechazado`);
+}
+
+// ── ACTIVIDAD ──
+function renderActividad(){
+  const events = [
+    {icon:'💰',cls:'act-i-green',main:'Pago confirmado · Carlos Ruiz',sub:'Plan Básico $79 activado',time:'hace 1h'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · María López',sub:'Plan Gratuito',time:'hace 3h'},
+    {icon:'⭐',cls:'act-i-orange',main:'Transferencia recibida · Ana Martínez',sub:'$169 · Plan Protector · Pendiente',time:'hace 5h'},
+    {icon:'💰',cls:'act-i-green',main:'Pago confirmado · Laura Vega',sub:'Plan Protector $169 activado',time:'ayer 11:00'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Pedro Soto',sub:'Plan Gratuito',time:'ayer 09:22'},
+    {icon:'🚫',cls:'act-i-red',main:'Usuario bloqueado · Pedro Soto',sub:'Razón: comportamiento inapropiado',time:'ayer 10:00'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Diego Flores',sub:'Plan Gratuito',time:'hace 6 días'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Laura Vega',sub:'Plan Gratuito → Protector en 1 día',time:'hace 7 días'},
+  ];
+  const html = events.map(e=>`
+    <div class="activity-item">
+      <div class="act-icon ${e.cls}">${e.icon}</div>
+      <div class="act-text"><div class="act-main">${e.main}</div><div class="act-sub">${e.sub}</div></div>
+      <div class="act-time">${e.time}</div>
+    </div>`).join('');
+  document.getElementById('fullActivity').innerHTML = html;
+}
+
+// ── STATS UPDATE ──
+function updateSummaryStats(){
+  document.getElementById('s-total').textContent = users.length;
+  document.getElementById('s-gratis').textContent = users.filter(u=>u.plan==='gratis').length;
+  const mrr = users.reduce((acc,u)=>{
+    return acc + {gratis:0,basico:79,protector:169,anual:140}[u.plan];
+  },0);
+  document.getElementById('s-mrr').textContent = '$'+mrr;
+  const pend = pagosHist.filter(p=>p.status==='pendiente').length;
+  document.getElementById('s-pagos').textContent = pend;
+  document.getElementById('pagosBadge').textContent = pend;
+}
+
+// ── CHARTS ──
+let chartsInit = false;
+function initCharts(){
+  if(chartsInit) return;
+  chartsInit = true;
+  // MRR Sidebar chart
+  new Chart(document.getElementById('chartMRR'),{
+    type:'line',
+    data:{
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
+      datasets:[{
+        label:'MRR',data:[0,0,79,79,248,417],
+        fill:true,
+        backgroundColor:'rgba(124,58,237,.1)',
+        borderColor:'#7C3AED',borderWidth:3,
+        pointBackgroundColor:'#7C3AED',pointRadius:5,tension:.4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+  });
+  // Planes donut
+  new Chart(document.getElementById('chartPlanes'),{
+    type:'doughnut',
+    data:{
+      labels:['Gratuito','Básico','Protector'],
+      datasets:[{data:[3,1,2],backgroundColor:['#FF6B6B','#00D4AA','#7C3AED'],borderWidth:0,hoverOffset:8}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'70%'}
+  });
+}
+
+function initCharts2(){
+  if(document.getElementById('chartMRR2').dataset.done) return;
+  document.getElementById('chartMRR2').dataset.done='1';
+  new Chart(document.getElementById('chartMRR2'),{
+    type:'bar',
+    data:{
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
+      datasets:[
+        {label:'Básico',data:[0,0,79,79,79,79],backgroundColor:'rgba(0,212,170,.7)',borderRadius:6},
+        {label:'Protector',data:[0,0,0,0,169,338],backgroundColor:'rgba(124,58,237,.7)',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+  });
+  new Chart(document.getElementById('chartUsers'),{
+    type:'bar',
+    data:{
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
+      datasets:[{label:'Nuevos usuarios',data:[0,0,1,1,2,2],backgroundColor:'rgba(255,107,107,.7)',borderRadius:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+  new Chart(document.getElementById('chartProyeccion'),{
+    type:'line',
+    data:{
+      labels:['Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      datasets:[
+        {label:'Conservador',data:[417,600,900,1200,1600,2000,2500],borderColor:'#00D4AA',borderWidth:2,tension:.4,fill:false,pointRadius:4},
+        {label:'Moderado',   data:[417,800,1500,2500,4000,6000,9000],borderColor:'#7C3AED',borderWidth:2,tension:.4,fill:false,pointRadius:4,borderDash:[5,5]},
+        {label:'Real',       data:[417,null,null,null,null,null,null],borderColor:'#FF6B6B',borderWidth:3,tension:.4,fill:false,pointRadius:6}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+  });
+}
+
+// ── TOAST ──
+function showToast(type, msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-'+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// Close modal on overlay click
+document.getElementById('userModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('userModal')) closeModal();
+});
+</script>
+</body>
+</html>
