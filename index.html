@@ -1162,10 +1162,7 @@ Responde en español, de forma clara y práctica para un dueño de mascota mexic
     const data = await response.json();
     const texto = data.content?.[0]?.text || 'No se pudo generar el plan. Intenta de nuevo.';
 
-    document.getElementById('alim-plan-texto').innerHTML =
-      texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-           .replace(/
-/g, '<br>')
+    document.getElementById('alim-plan-texto').innerHTML = texto.split('\n').join('<br>');
            .replace(/^(\d+\..+)$/gm, '<div style="margin:.4rem 0;"><strong>$1</strong></div>');
 
     document.getElementById('alim-resultado').style.display = 'block';
