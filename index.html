@@ -242,6 +242,11 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
   .form-grid{grid-template-columns:1fr;}
   .form-full{grid-column:auto;}
 }
+
+/* VET IA CHAT */
+.msg-user{align-self:flex-end;background:var(--morado);color:#fff;padding:.7rem 1rem;border-radius:1.2rem 1.2rem 0 1.2rem;max-width:80%;font-size:.87rem;font-weight:600;line-height:1.5;}
+.msg-ia{align-self:flex-start;background:#f4f4f8;color:#222;padding:.7rem 1rem;border-radius:1.2rem 1.2rem 1.2rem 0;max-width:85%;font-size:.87rem;font-weight:600;line-height:1.6;}
+.msg-ia-loading{align-self:flex-start;background:#f4f4f8;padding:.7rem 1rem;border-radius:1.2rem;color:#aaa;font-size:.85rem;font-style:italic;}
 </style>
 </head>
 <body>
@@ -420,6 +425,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
       <div class="dash-nav-item" onclick="goDash('mascotas',this)"><span class="ni">🐾</span>Mis mascotas</div>
       <div class="dash-nav-item" onclick="goDash('historial',this)"><span class="ni">📋</span>Historial médico</div>
       <div class="dash-nav-item" onclick="goDash('alertas',this)"><span class="ni">🔔</span>Alertas</div>
+      <div class="dash-nav-item" onclick="goDash('vetia',this)"><span class="ni">🩺</span>Vet IA</div>
       <div class="dash-nav-item" onclick="goDash('perfil',this)"><span class="ni">👤</span>Mi perfil</div>
       <div class="dash-sidebar-footer">
         <div class="dash-nav-item" onclick="doLogout()"><span class="ni">🚪</span>Cerrar sesión</div>
@@ -506,6 +512,36 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
             <div style="display:flex;gap:.8rem;margin-top:.5rem;"><button class="add-btn" onclick="saveAlerta()">💾 Guardar</button><button class="cancel-btn" onclick="toggleForm('aForm')">Cancelar</button></div>
           </div>
           <div id="listaAlertas"><p style="color:#aaa;text-align:center;padding:1.5rem;font-size:.88rem;font-weight:600;">Sin alertas activas.</p></div>
+        </div>
+      </div>
+      <!-- VET IA -->
+      <div id="dash-vetia" class="dash-panel">
+        <div class="dash-header"><div class="dash-greeting">🩺 Vet <span>IA</span></div></div>
+        <div id="vetia-bloqueado" style="display:none;" class="dash-card" style="text-align:center;">
+          <div style="text-align:center;padding:2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+            <div style="font-weight:800;font-size:1.1rem;margin-bottom:.5rem;">Función exclusiva Plan Básico</div>
+            <div style="color:#aaa;font-size:.88rem;margin-bottom:1.5rem;">Consulta a nuestro veterinario con IA las 24 horas. Plan Básico incluye 15 consultas/mes.</div>
+            <button class="add-btn" onclick="goPage('precios')">⭐ Ver planes desde $79/mes</button>
+          </div>
+        </div>
+        <div id="vetia-chat" style="display:none;">
+          <div class="dash-card" style="margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-weight:800;font-size:.9rem;">🩺 Veterinario IA</div>
+              <div id="vetia-contador" style="font-size:.78rem;color:#aaa;font-weight:600;"></div>
+            </div>
+          </div>
+          <div class="dash-card" style="margin-bottom:1rem;">
+            <div id="vetia-mensajes" style="min-height:300px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:.8rem;padding:.5rem 0;"></div>
+          </div>
+          <div class="dash-card">
+            <div style="display:flex;gap:.8rem;align-items:flex-end;">
+              <textarea id="vetia-input" class="form-input" rows="2" placeholder="Describe los síntomas o tu pregunta sobre tu mascota..." style="flex:1;resize:none;"></textarea>
+              <button id="vetia-btn" class="add-btn" onclick="enviarVetIA()" style="white-space:nowrap;padding:.7rem 1.2rem;">Enviar</button>
+            </div>
+            <div style="font-size:.74rem;color:#aaa;margin-top:.5rem;font-weight:600;">⚠️ El Vet IA no reemplaza una consulta veterinaria presencial.</div>
+          </div>
         </div>
       </div>
       <!-- PERFIL -->
@@ -944,6 +980,7 @@ window.goDash = function(panel, el) {
   if (el) el.classList.add('active');
   if (panel === 'historial') loadHistorial();
   if (panel === 'alertas') loadAlertas();
+  if (panel === 'vetia') initVetIA();
 };
 
 window.toggleMenu = function() { document.getElementById('mobMenu').classList.toggle('open'); };
@@ -970,6 +1007,177 @@ document.addEventListener('keydown', e => {
   const active = document.querySelector('.page.active');
   if (active?.id === 'page-login') doLogin();
   if (active?.id === 'page-registro') doRegistro();
+});
+
+// ── VET IA ──
+let vetiaHistorial = [];
+let vetiaCargando = false;
+const LIMITE_BASICO = 15;
+
+async function initVetIA() {
+  if (!currentUser) return;
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
+
+  if (plan === 'gratis') {
+    document.getElementById('vetia-bloqueado').style.display = 'block';
+    document.getElementById('vetia-chat').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('vetia-bloqueado').style.display = 'none';
+  document.getElementById('vetia-chat').style.display = 'block';
+
+  // Contar consultas del mes
+  const ahora = new Date();
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
+  const consultasSnap = await getDocs(query(
+    collection(db, 'vetia_consultas'),
+    where('userId','==', currentUser.uid),
+    where('fecha','>=', inicioMes)
+  ));
+  const usadas = consultasSnap.size;
+
+  if (plan === 'basico') {
+    const restantes = LIMITE_BASICO - usadas;
+    document.getElementById('vetia-contador').textContent = `💬 ${restantes} consultas restantes este mes`;
+    if (restantes <= 0) {
+      document.getElementById('vetia-btn').disabled = true;
+      document.getElementById('vetia-input').placeholder = 'Alcanzaste el límite mensual. Actualiza a Plan Protector para consultas ilimitadas.';
+      document.getElementById('vetia-input').disabled = true;
+    }
+  } else {
+    document.getElementById('vetia-contador').textContent = '💬 Consultas ilimitadas';
+  }
+
+  // Mensaje de bienvenida si el chat está vacío
+  if (vetiaHistorial.length === 0) {
+    const mascotas = userMascotas.map(m => `${m.nombre} (${m.especie})`).join(', ') || 'sin mascotas registradas';
+    agregarMensajeIA(`¡Hola! Soy tu veterinario virtual 🐾 Veo que tienes: **${mascotas}**. ¿En qué puedo ayudarte hoy?`);
+  }
+}
+
+window.enviarVetIA = async function() {
+  if (vetiaCargando) return;
+  const input = document.getElementById('vetia-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  // Verificar límite
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
+  if (plan === 'gratis') return;
+
+  if (plan === 'basico') {
+    const ahora = new Date();
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
+    const consultasSnap = await getDocs(query(
+      collection(db, 'vetia_consultas'),
+      where('userId','==', currentUser.uid),
+      where('fecha','>=', inicioMes)
+    ));
+    if (consultasSnap.size >= LIMITE_BASICO) {
+      toast('err', 'Límite mensual alcanzado. Actualiza a Plan Protector.');
+      return;
+    }
+  }
+
+  input.value = '';
+  vetiaCargando = true;
+  agregarMensajeUsuario(texto);
+  const loadingEl = agregarMensajeLoading();
+
+  // Contexto de mascotas
+  const mascotas = userMascotas.map(m =>
+    `${m.nombre}: ${m.especie}${m.raza ? ', ' + m.raza : ''}${m.edad ? ', ' + m.edad + ' años' : ''}${m.peso ? ', ' + m.peso + 'kg' : ''}`
+  ).join(' | ') || 'sin mascotas registradas';
+
+  vetiaHistorial.push({ role: 'user', content: texto });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Eres un veterinario virtual experto y empático llamado "Vet IA" de PetCuidado, una app mexicana de cuidado de mascotas. 
+Respondes en español mexicano de forma clara, cálida y profesional.
+Las mascotas del usuario son: ${mascotas}.
+Siempre que sea apropiado menciona el nombre de la mascota específica.
+Si detectas una emergencia veterinaria real, indícalo claramente y recomienda ir al veterinario de inmediato.
+Nunca diagnostiques enfermedades graves de forma definitiva — orienta y recomienda consulta presencial cuando sea necesario.
+Sé conciso: respuestas de máximo 3-4 párrafos.`,
+        messages: vetiaHistorial.slice(-10)
+      })
+    });
+
+    const data = await response.json();
+    const respuesta = data.content?.[0]?.text || 'No pude procesar tu consulta. Intenta de nuevo.';
+
+    loadingEl.remove();
+    agregarMensajeIA(respuesta);
+    vetiaHistorial.push({ role: 'assistant', content: respuesta });
+
+    // Guardar consulta en Firestore
+    await addDoc(collection(db, 'vetia_consultas'), {
+      userId: currentUser.uid,
+      pregunta: texto,
+      respuesta,
+      fecha: new Date().toISOString()
+    });
+
+    // Actualizar contador
+    await initVetIA();
+
+  } catch(err) {
+    loadingEl.remove();
+    agregarMensajeIA('Hubo un error al conectar. Verifica tu conexión e intenta de nuevo.');
+  }
+
+  vetiaCargando = false;
+};
+
+function agregarMensajeUsuario(texto) {
+  const div = document.createElement('div');
+  div.className = 'msg-user';
+  div.textContent = texto;
+  document.getElementById('vetia-mensajes').appendChild(div);
+  scrollChat();
+}
+
+function agregarMensajeIA(texto) {
+  const div = document.createElement('div');
+  div.className = 'msg-ia';
+  div.innerHTML = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  document.getElementById('vetia-mensajes').appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function agregarMensajeLoading() {
+  const div = document.createElement('div');
+  div.className = 'msg-ia-loading';
+  div.textContent = '🩺 Consultando...';
+  document.getElementById('vetia-mensajes').appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function scrollChat() {
+  const msgs = document.getElementById('vetia-mensajes');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Enter para enviar en el chat
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    const input = document.getElementById('vetia-input');
+    if (document.activeElement === input) {
+      e.preventDefault();
+      window.enviarVetIA();
+    }
+  }
 });
 </script>
 </body>
