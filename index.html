@@ -500,6 +500,8 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
               <div class="form-group"><label class="form-label">Tipo *</label><select class="form-input" id="aTipo"><option value="vacuna">💉 Vacuna</option><option value="medicamento">💊 Medicamento</option><option value="bano">🛁 Baño</option><option value="desparasitacion">🐛 Desparasitación</option></select></div>
               <div class="form-group form-full"><label class="form-label">Título *</label><input class="form-input" id="aTitulo" placeholder="Ej: Vacuna antirrábica"></div>
               <div class="form-group"><label class="form-label">Fecha vencimiento *</label><input class="form-input" type="date" id="aFecha"></div>
+              <div class="form-group"><label class="form-label">Hora del recordatorio</label><input class="form-input" type="time" id="aHora" value="09:00"></div>
+              <div class="form-group form-full"><label class="form-label">Notas (opcional)</label><input class="form-input" id="aNotas" placeholder="Ej: Clínica del Dr. Martínez, llevar cartilla"></div>
             </div>
             <div style="display:flex;gap:.8rem;margin-top:.5rem;"><button class="add-btn" onclick="saveAlerta()">💾 Guardar</button><button class="cancel-btn" onclick="toggleForm('aForm')">Cancelar</button></div>
           </div>
@@ -841,7 +843,11 @@ function renderAlertas(alertas) {
     const color = dias <= 7 ? 'ad-r' : dias <= 14 ? 'ad-a' : 'ad-v';
     return `<div class="alerta-item">
       <div class="alerta-dot ${color}"></div>
-      <div style="flex:1;"><div style="font-weight:800;font-size:.88rem;">${tipoMap[a.tipo]||'🔔'} ${a.titulo}</div><div style="font-size:.76rem;color:#aaa;font-weight:600;">${dias > 0 ? 'En '+dias+' días' : '¡Vencida!'}</div></div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:.88rem;">${tipoMap[a.tipo]||'🔔'} ${a.titulo}</div>
+        <div style="font-size:.76rem;color:#aaa;font-weight:600;">${a.fechaVencimiento}${a.hora ? ' · ⏰ '+a.hora : ''} · ${dias > 0 ? 'En '+dias+' días' : '¡Vencida!'}</div>
+        ${a.notas ? `<div style="font-size:.74rem;color:#bbb;font-style:italic;margin-top:.2rem;">📝 ${a.notas}</div>` : ''}
+      </div>
       <button onclick="deleteAlerta('${a.id}')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;" title="Eliminar">✕</button>
     </div>`;
   }).join('');
@@ -859,13 +865,16 @@ window.saveAlerta = async function() {
   const fecha = document.getElementById('aFecha').value;
   if (!mascotaId || !titulo || !fecha) { toast('err', 'Completa todos los campos'); return; }
   try {
+    const hora = document.getElementById('aHora').value || '09:00';
+    const notas = document.getElementById('aNotas').value.trim();
     await addDoc(collection(db, 'alertas'), {
       userId: currentUser.uid, mascotaId,
       titulo, tipo: document.getElementById('aTipo').value,
-      fechaVencimiento: fecha, activa: true,
+      fechaVencimiento: fecha, hora, notas, activa: true,
       createdAt: new Date().toISOString()
     });
-    ['aTitulo','aFecha'].forEach(id => document.getElementById(id).value = '');
+    ['aTitulo','aFecha','aNotas'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('aHora').value = '09:00';
     toggleForm('aForm');
     await loadAlertas();
     toast('ok', '🔔 Alerta creada');
