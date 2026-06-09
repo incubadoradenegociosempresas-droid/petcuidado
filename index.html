@@ -1137,13 +1137,14 @@ async function initSintomas() {
     return;
   }
   const tipoMap = { perro:'🐶', gato:'🐱', ave:'🐦', conejo:'🐰', hamster:'🐹', reptil:'🦎', otro:'🐾' };
-  btns.innerHTML = userMascotas.map(function(m){
-    return '<button onclick="seleccionarMascotaSint(' + JSON.stringify(m.id) + ')" id="sint-btn-' + m.id + '" style="padding:.5rem 1rem;border-radius:2rem;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-weight:700;font-size:.85rem;">' + (tipoMap[m.especie]||'🐾') + ' ' + m.nombre + '</button>';
+  btns.innerHTML = userMascotas.map(function(m, idx){
+    return '<button onclick="seleccionarMascotaSint(' + idx + ')" id="sint-btn-' + m.id + '" style="padding:.5rem 1rem;border-radius:2rem;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-weight:700;font-size:.85rem;">' + (tipoMap[m.especie]||'🐾') + ' ' + m.nombre + '</button>';
   }).join('');
 }
 
-window.seleccionarMascotaSint = function(id) {
-  sintMascotaActual = userMascotas.find(m => m.id === id);
+window.seleccionarMascotaSint = function(idx) {
+  sintMascotaActual = userMascotas[idx];
+  var id = sintMascotaActual ? sintMascotaActual.id : null;
   if (!sintMascotaActual) return;
   document.querySelectorAll('[id^="sint-btn-"]').forEach(b => {
     b.style.borderColor = '#e0e0e0';
