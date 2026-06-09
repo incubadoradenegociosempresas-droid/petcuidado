@@ -770,6 +770,16 @@ window.saveMascota = async function() {
   const nombre = document.getElementById('mNombre').value.trim();
   const especie = document.getElementById('mEspecie').value;
   if (!nombre || !especie) { toast('err', 'Nombre y especie son obligatorios'); return; }
+  // Validar límite por plan
+  const limites = { gratis: 1, basico: 3, protector: 999, anual: 999 };
+  const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan = userSnap.exists() ? (userSnap.data().plan || 'gratis') : 'gratis';
+  const limite = limites[plan] ?? 1;
+  if (userMascotas.length >= limite) {
+    const nombres = { gratis: 'Gratuito (máx. 1)', basico: 'Básico (máx. 3)', protector: 'Protector' };
+    toast('err', `Tu plan ${nombres[plan]} no permite más mascotas. ¡Mejora tu plan!`);
+    return;
+  }
   try {
     await addDoc(collection(db, 'mascotas'), {
       userId: currentUser.uid,
