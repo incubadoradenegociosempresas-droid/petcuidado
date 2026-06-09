@@ -1113,7 +1113,6 @@ Sé conciso: respuestas de máximo 3-4 párrafos.`,
     });
 
     const data = await response.json();
-    console.log('VetIA response:', JSON.stringify(data));
     const respuesta = data.content?.[0]?.text || 'No pude procesar tu consulta. Intenta de nuevo.';
 
     loadingEl.remove();
