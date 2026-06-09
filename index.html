@@ -1215,8 +1215,8 @@ ROJO = emergencia, ir al veterinario AHORA`;
     const texto = data.content?.[0]?.text || 'No se pudo analizar. Intenta de nuevo.';
 
     // Parse urgency level
-    const urgMatch = texto.match(/NIVEL_URGENCIA:\s*(VERDE|AMARILLO|ROJO)/);
-    const tituloMatch = texto.match(/TITULO:\s*(.+)/);
+    const urgMatch = texto.match(/NIVEL_URGENCIA: *(VERDE|AMARILLO|ROJO)/);
+    const tituloMatch = texto.match(/TITULO: *(.+)/);
     const urgencia = urgMatch ? urgMatch[1] : 'AMARILLO';
     const titulo = tituloMatch ? tituloMatch[1].trim() : 'Requiere atención';
 
@@ -1229,9 +1229,10 @@ ROJO = emergencia, ir al veterinario AHORA`;
     badge.style.color = textColores[urgencia];
     badge.innerHTML = iconos[urgencia] + ' ' + titulo;
 
-    // Remove first two lines (NIVEL_URGENCIA and TITULO) from display
-    const textoLimpio = texto.replace(/NIVEL_URGENCIA:.*
-/, '').replace(/TITULO:.*
+    // Clean output
+    const lineas = texto.split('\n');
+    const textoLimpio = lineas.filter(function(l){ return l.indexOf('NIVEL_URGENCIA:') !== 0 && l.indexOf('TITULO:') !== 0; }).join('<br>');
+    document.getElementById('sint-resultado-texto').innerHTML = textoLimpio;
 /, '').trim();
     document.getElementById('sint-resultado-texto').innerHTML = textoLimpio.split('
 ').join('<br>');
