@@ -821,6 +821,15 @@ window.saveHistorial = async function() {
   const desc = document.getElementById('hDesc').value.trim();
   const fecha = document.getElementById('hFecha').value;
   if (!mascotaId || !desc || !fecha) { toast('err', 'Completa los campos obligatorios'); return; }
+  // Validar límite por plan
+  const userSnap2 = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan2 = userSnap2.exists() ? (userSnap2.data().plan || 'gratis') : 'gratis';
+  if (plan2 === 'gratis') {
+    const histSnap = await getDocs(query(collection(db, 'historial'), where('userId','==',currentUser.uid)));
+    if (histSnap.size >= 5) {
+      toast('err', 'Plan Gratuito: máx. 5 registros médicos. ¡Mejora tu plan!'); return;
+    }
+  }
   try {
     await addDoc(collection(db, 'historial'), {
       mascotaId, userId: currentUser.uid,
@@ -874,6 +883,15 @@ window.saveAlerta = async function() {
   const titulo = document.getElementById('aTitulo').value.trim();
   const fecha = document.getElementById('aFecha').value;
   if (!mascotaId || !titulo || !fecha) { toast('err', 'Completa todos los campos'); return; }
+  // Validar límite por plan
+  const userSnap3 = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan3 = userSnap3.exists() ? (userSnap3.data().plan || 'gratis') : 'gratis';
+  if (plan3 === 'gratis') {
+    const alertSnap = await getDocs(query(collection(db, 'alertas'), where('userId','==',currentUser.uid), where('activa','==',true)));
+    if (alertSnap.size >= 3) {
+      toast('err', 'Plan Gratuito: máx. 3 alertas activas. ¡Mejora tu plan!'); return;
+    }
+  }
   try {
     const hora = document.getElementById('aHora').value || '09:00';
     const notas = document.getElementById('aNotas').value.trim();
