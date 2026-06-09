@@ -426,6 +426,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
       <div class="dash-nav-item" onclick="goDash('historial',this)"><span class="ni">📋</span>Historial médico</div>
       <div class="dash-nav-item" onclick="goDash('alertas',this)"><span class="ni">🔔</span>Alertas</div>
       <div class="dash-nav-item" onclick="goDash('vetia',this)"><span class="ni">🩺</span>Vet IA</div>
+      <div class="dash-nav-item" onclick="goDash('alimentacion',this)"><span class="ni">🥗</span>Alimentación IA</div>
       <div class="dash-nav-item" onclick="goDash('perfil',this)"><span class="ni">👤</span>Mi perfil</div>
       <div class="dash-sidebar-footer">
         <div class="dash-nav-item" onclick="doLogout()"><span class="ni">🚪</span>Cerrar sesión</div>
@@ -512,6 +513,63 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
             <div style="display:flex;gap:.8rem;margin-top:.5rem;"><button class="add-btn" onclick="saveAlerta()">💾 Guardar</button><button class="cancel-btn" onclick="toggleForm('aForm')">Cancelar</button></div>
           </div>
           <div id="listaAlertas"><p style="color:#aaa;text-align:center;padding:1.5rem;font-size:.88rem;font-weight:600;">Sin alertas activas.</p></div>
+        </div>
+      </div>
+      <!-- ALIMENTACION IA -->
+      <div id="dash-alimentacion" class="dash-panel">
+        <div class="dash-header"><div class="dash-greeting">🥗 Alimentación <span>IA</span></div></div>
+
+        <div id="alim-bloqueado" style="display:none;" class="dash-card">
+          <div style="text-align:center;padding:2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+            <div style="font-weight:800;font-size:1.1rem;margin-bottom:.5rem;">Función exclusiva Plan Protector</div>
+            <div style="color:#aaa;font-size:.88rem;margin-bottom:1.5rem;">Recibe un plan de alimentación personalizado con IA para cada una de tus mascotas.</div>
+            <button class="add-btn" onclick="goPage('precios')">⭐ Ver planes desde $169/mes</button>
+          </div>
+        </div>
+
+        <div id="alim-contenido" style="display:none;">
+          <div class="dash-card" style="margin-bottom:1rem;">
+            <div style="font-weight:800;font-size:.95rem;margin-bottom:1rem;">🐾 Selecciona una mascota</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;" id="alim-mascotas-btns"></div>
+          </div>
+
+          <div id="alim-form" class="dash-card" style="margin-bottom:1rem;display:none;">
+            <div style="font-weight:800;font-size:.95rem;margin-bottom:1rem;">📋 Datos adicionales</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Condición corporal</label>
+                <select class="form-input" id="alim-condicion">
+                  <option value="bajo peso">Bajo peso</option>
+                  <option value="peso ideal" selected>Peso ideal</option>
+                  <option value="sobrepeso">Sobrepeso</option>
+                  <option value="obesidad">Obesidad</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nivel de actividad</label>
+                <select class="form-input" id="alim-actividad">
+                  <option value="sedentario">Sedentario</option>
+                  <option value="moderado" selected>Moderado</option>
+                  <option value="activo">Activo</option>
+                  <option value="muy activo">Muy activo</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label class="form-label">Condiciones especiales (opcional)</label>
+                <input class="form-input" id="alim-condiciones" placeholder="Ej: diabético, alérgico al pollo, castrado...">
+              </div>
+            </div>
+            <button class="add-btn" id="alim-btn" onclick="generarPlanAlimentacion()">🥗 Generar plan personalizado</button>
+          </div>
+
+          <div id="alim-resultado" style="display:none;" class="dash-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+              <div style="font-weight:800;font-size:.95rem;">📄 Plan de alimentación</div>
+              <button class="btn-ghost" onclick="document.getElementById('alim-resultado').style.display='none';document.getElementById('alim-form').style.display='block';" style="font-size:.78rem;background:none;border:1px solid #ddd;padding:.3rem .8rem;border-radius:.5rem;cursor:pointer;">🔄 Nuevo plan</button>
+            </div>
+            <div id="alim-plan-texto" style="font-size:.87rem;line-height:1.8;color:#333;"></div>
+          </div>
         </div>
       </div>
       <!-- VET IA -->
@@ -981,6 +1039,7 @@ window.goDash = function(panel, el) {
   if (panel === 'historial') loadHistorial();
   if (panel === 'alertas') loadAlertas();
   if (panel === 'vetia') initVetIA();
+  if (panel === 'alimentacion') initAlimentacion();
 };
 
 window.toggleMenu = function() { document.getElementById('mobMenu').classList.toggle('open'); };
@@ -1008,6 +1067,127 @@ document.addEventListener('keydown', e => {
   if (active?.id === 'page-login') doLogin();
   if (active?.id === 'page-registro') doRegistro();
 });
+
+// ── ALIMENTACIÓN IA ──
+let alimMascotaActual = null;
+
+async function initAlimentacion() {
+  if (!currentUser) return;
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
+
+  if (plan !== 'protector' && plan !== 'anual') {
+    document.getElementById('alim-bloqueado').style.display = 'block';
+    document.getElementById('alim-contenido').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('alim-bloqueado').style.display = 'none';
+  document.getElementById('alim-contenido').style.display = 'block';
+
+  // Render botones de mascotas
+  const btns = document.getElementById('alim-mascotas-btns');
+  if (userMascotas.length === 0) {
+    btns.innerHTML = '<p style="color:#aaa;font-size:.88rem;">Sin mascotas registradas. <a onclick="goDash('mascotas',null)" style="color:var(--morado);cursor:pointer;font-weight:800;">+ Agregar</a></p>';
+    return;
+  }
+  const tipoMap = { perro:'🐶', gato:'🐱', ave:'🐦', conejo:'🐰', hamster:'🐹', reptil:'🦎', otro:'🐾' };
+  btns.innerHTML = userMascotas.map(m => `
+    <button onclick="seleccionarMascotaAlim('${m.id}')" id="alim-btn-${m.id}"
+      style="padding:.5rem 1rem;border-radius:2rem;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-weight:700;font-size:.85rem;transition:all .2s;">
+      ${tipoMap[m.especie]||'🐾'} ${m.nombre}
+    </button>
+  `).join('');
+}
+
+window.seleccionarMascotaAlim = function(id) {
+  alimMascotaActual = userMascotas.find(m => m.id === id);
+  if (!alimMascotaActual) return;
+  // Highlight selected
+  document.querySelectorAll('[id^="alim-btn-"]').forEach(b => {
+    b.style.borderColor = '#e0e0e0';
+    b.style.background = '#fff';
+    b.style.color = '#333';
+  });
+  const btn = document.getElementById('alim-btn-' + id);
+  btn.style.borderColor = 'var(--morado)';
+  btn.style.background = 'var(--morado)';
+  btn.style.color = '#fff';
+  document.getElementById('alim-form').style.display = 'block';
+  document.getElementById('alim-resultado').style.display = 'none';
+};
+
+window.generarPlanAlimentacion = async function() {
+  if (!alimMascotaActual) return;
+  const btn = document.getElementById('alim-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando plan...';
+
+  const m = alimMascotaActual;
+  const condicion = document.getElementById('alim-condicion').value;
+  const actividad = document.getElementById('alim-actividad').value;
+  const condiciones = document.getElementById('alim-condiciones').value.trim();
+
+  const prompt = `Crea un plan de alimentación detallado y personalizado para una mascota con estas características:
+- Nombre: ${m.nombre}
+- Especie: ${m.especie}
+- Raza: ${m.raza || 'No especificada'}
+- Edad: ${m.edad ? m.edad + ' años' : 'No especificada'}
+- Peso: ${m.peso ? m.peso + ' kg' : 'No especificado'}
+- Condición corporal: ${condicion}
+- Nivel de actividad: ${actividad}
+- Condiciones especiales: ${condiciones || 'Ninguna'}
+
+El plan debe incluir:
+1. Porciones diarias recomendadas
+2. Frecuencia de comidas
+3. Alimentos recomendados (marcas mexicanas si es posible)
+4. Alimentos prohibidos para esta especie
+5. Suplementos recomendados si aplica
+6. Hidratación diaria recomendada
+7. Tip especial según su condición
+
+Responde en español, de forma clara y práctica para un dueño de mascota mexicano.`;
+
+  try {
+    const response = await fetch('https://petcuidado-proxy.incubadora-de-negocios-empresas.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const texto = data.content?.[0]?.text || 'No se pudo generar el plan. Intenta de nuevo.';
+
+    document.getElementById('alim-plan-texto').innerHTML =
+      texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+           .replace(/
+/g, '<br>')
+           .replace(/^(\d+\..+)$/gm, '<div style="margin:.4rem 0;"><strong>$1</strong></div>');
+
+    document.getElementById('alim-resultado').style.display = 'block';
+    document.getElementById('alim-form').style.display = 'none';
+
+    // Guardar en Firestore
+    await addDoc(collection(db, 'planes_alimentacion'), {
+      userId: currentUser.uid,
+      mascotaId: m.id,
+      mascotaNombre: m.nombre,
+      plan: texto,
+      condicion, actividad, condiciones,
+      fecha: new Date().toISOString()
+    });
+
+  } catch(err) {
+    toast('err', 'Error al generar el plan. Intenta de nuevo.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🥗 Generar plan personalizado';
+};
 
 // ── VET IA ──
 let vetiaHistorial = [];
