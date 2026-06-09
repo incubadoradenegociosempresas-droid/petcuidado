@@ -1088,7 +1088,7 @@ async function initAlimentacion() {
   // Render botones de mascotas
   const btns = document.getElementById('alim-mascotas-btns');
   if (userMascotas.length === 0) {
-    btns.innerHTML = '<p style="color:#aaa;font-size:.88rem;">Sin mascotas registradas. <a onclick="goDash('mascotas',null)" style="color:var(--morado);cursor:pointer;font-weight:800;">+ Agregar</a></p>';
+    btns.innerHTML = '<p style="color:#aaa;font-size:.88rem;">Sin mascotas registradas. <a onclick="goDash(\'mascotas\',null)" style="color:var(--morado);cursor:pointer;font-weight:800;">+ Agregar</a></p>';
     return;
   }
   const tipoMap = { perro:'🐶', gato:'🐱', ave:'🐦', conejo:'🐰', hamster:'🐹', reptil:'🦎', otro:'🐾' };
