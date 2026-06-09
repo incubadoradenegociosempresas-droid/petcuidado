@@ -1233,9 +1233,6 @@ ROJO = emergencia, ir al veterinario AHORA`;
     const lineas = texto.split('\n');
     const textoLimpio = lineas.filter(function(l){ return l.indexOf('NIVEL_URGENCIA:') !== 0 && l.indexOf('TITULO:') !== 0; }).join('<br>');
     document.getElementById('sint-resultado-texto').innerHTML = textoLimpio;
-/, '').trim();
-    document.getElementById('sint-resultado-texto').innerHTML = textoLimpio.split('
-').join('<br>');
 
     document.getElementById('sint-resultado').style.display = 'block';
     document.getElementById('sint-form').style.display = 'none';
