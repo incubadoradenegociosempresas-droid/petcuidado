@@ -536,6 +536,7 @@ table.tbl{width:100%;border-collapse:collapse;}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, deleteDoc, query, orderBy, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -546,8 +547,9 @@ const firebaseConfig = {
   messagingSenderId: "770470273240",
   appId: "1:770470273240:web:c6119492e6e0ef615377ad"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
 // ── CONFIG ──
 const ADMIN = { email:'admin@petcuidado.com', pass:'admin2026' };
@@ -563,19 +565,24 @@ let chartsInit = false;
 let mrrChart = null, planesChart = null;
 
 // ── LOGIN ──
-window.doLogin = function(){
+window.doLogin = async function(){
   const e = document.getElementById('lEmail').value.trim();
   const p = document.getElementById('lPass').value;
   const err = document.getElementById('lErr');
-  if(e === ADMIN.email && p === ADMIN.pass){
+  if(e !== ADMIN.email){
+    err.classList.add('show'); return;
+  }
+  try {
+    await signInWithEmailAndPassword(auth, e, p);
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
     loadData();
-  } else {
+  } catch(error) {
     err.classList.add('show');
   }
 };
-window.doLogout = function(){
+window.doLogout = async function(){
+  await signOut(auth);
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').classList.remove('visible');
   document.getElementById('lPass').value = '';
