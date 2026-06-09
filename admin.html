@@ -602,8 +602,8 @@ async function loadData(){
       email: d.data().email || '',
       plan: d.data().plan || 'gratis',
       status: d.data().status || 'activo',
-      fecha: d.data().createdAt ? new Date(d.data().createdAt.toDate()).toLocaleDateString('es-MX') : '—',
-      ultimoPago: d.data().ultimoPago ? new Date(d.data().ultimoPago.toDate()).toLocaleDateString('es-MX') : '—',
+      fecha: d.data().createdAt ? new Date(typeof d.data().createdAt === 'string' ? d.data().createdAt : d.data().createdAt.toDate()).toLocaleDateString('es-MX') : '—',
+      ultimoPago: d.data().ultimoPago ? new Date(typeof d.data().ultimoPago === 'string' ? d.data().ultimoPago : d.data().ultimoPago.toDate()).toLocaleDateString('es-MX') : '—',
       notas: d.data().notas || ''
     }));
 
@@ -616,7 +616,7 @@ async function loadData(){
       email: d.data().email || '',
       monto: d.data().monto || 0,
       plan: d.data().plan || 'gratis',
-      fecha: d.data().fecha ? new Date(d.data().fecha.toDate()).toLocaleString('es-MX') : d.data().fechaStr || '—',
+      fecha: d.data().fecha ? new Date(typeof d.data().fecha === 'string' ? d.data().fecha : d.data().fecha.toDate()).toLocaleString('es-MX') : d.data().fechaStr || '—',
       ref: d.data().ref || '—',
       status: d.data().status || 'pendiente'
     }));
