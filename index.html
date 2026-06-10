@@ -171,6 +171,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,248,
 .dash-nav-item.active{background:var(--morado);color:#fff;}
 .dash-nav-item .ni{font-size:1rem;flex-shrink:0;width:20px;text-align:center;}
 .dash-sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(255,255,255,.08);}
+
+/* Secciones de plan en sidebar */
+.dash-nav-section{font-size:.65rem;font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.3);padding:.9rem .9rem .3rem;margin-top:.4rem;text-transform:uppercase;}
+.dash-nav-item.bloqueado{opacity:.4;cursor:not-allowed;position:relative;}
+.dash-nav-item.bloqueado:hover{background:transparent;color:rgba(255,255,255,.6);}
+.dash-nav-item.bloqueado::after{content:'🔒';position:absolute;right:.7rem;font-size:.7rem;}
 .dash-main{flex:1;background:#F5F5F8;padding:2rem;overflow-y:auto;}
 .dash-panel{display:none;}
 .dash-panel.active{display:block;}
@@ -555,17 +561,26 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
 <div id="page-dashboard" class="page">
   <div class="dash-layout">
     <div class="dash-sidebar">
+      <!-- PLAN GRATUITO -->
+      <div class="dash-nav-section">🆓 Gratuito</div>
       <div class="dash-nav-item active" onclick="goDash('inicio',this)"><span class="ni">🏠</span>Inicio</div>
       <div class="dash-nav-item" onclick="goDash('mascotas',this)"><span class="ni">🐾</span>Mis mascotas</div>
-      <div class="dash-nav-item" onclick="goDash('historial',this)"><span class="ni">📋</span>Historial médico</div>
       <div class="dash-nav-item" onclick="goDash('alertas',this)"><span class="ni">🔔</span>Alertas</div>
-      <div class="dash-nav-item" onclick="goDash('vetia',this)"><span class="ni">🩺</span>Vet IA</div>
-      <div class="dash-nav-item" onclick="goDash('alimentacion',this)"><span class="ni">🥗</span>Alimentación IA</div>
-      <div class="dash-nav-item" onclick="goDash('sintomas',this)"><span class="ni">🔍</span>Síntomas IA</div>
-      <div class="dash-nav-item" onclick="goDash('score',this)"><span class="ni">🏥</span>Score de Salud</div>
-      <div class="dash-nav-item" onclick="goDash('cartilla',this)"><span class="ni">📱</span>Cartilla QR</div>
-      <div class="dash-nav-item" onclick="goDash('auxilios',this)"><span class="ni">🆘</span>Primeros Auxilios</div>
       <div class="dash-nav-item" onclick="goDash('perfil',this)"><span class="ni">👤</span>Mi perfil</div>
+
+      <!-- PLAN BÁSICO -->
+      <div class="dash-nav-section" id="nav-section-basico">⭐ Básico</div>
+      <div class="dash-nav-item" id="nav-historial" onclick="goDash('historial',this)"><span class="ni">📋</span>Historial médico</div>
+      <div class="dash-nav-item" id="nav-vetia" onclick="goDash('vetia',this)"><span class="ni">🩺</span>Vet IA</div>
+      <div class="dash-nav-item" id="nav-auxilios" onclick="goDash('auxilios',this)"><span class="ni">🆘</span>Primeros Auxilios</div>
+      <div class="dash-nav-item" id="nav-cartilla" onclick="goDash('cartilla',this)"><span class="ni">📱</span>Cartilla QR</div>
+
+      <!-- PLAN PROTECTOR -->
+      <div class="dash-nav-section" id="nav-section-protector">👑 Protector</div>
+      <div class="dash-nav-item" id="nav-alimentacion" onclick="goDash('alimentacion',this)"><span class="ni">🥗</span>Alimentación IA</div>
+      <div class="dash-nav-item" id="nav-sintomas" onclick="goDash('sintomas',this)"><span class="ni">🔍</span>Síntomas IA</div>
+      <div class="dash-nav-item" id="nav-score" onclick="goDash('score',this)"><span class="ni">🏥</span>Score de Salud</div>
+
       <div class="dash-sidebar-footer">
         <div class="dash-nav-item" onclick="doLogout()"><span class="ni">🚪</span>Cerrar sesión</div>
       </div>
@@ -1115,6 +1130,7 @@ window.loadDashboard = async function() {
   await loadMascotas();
   await loadAlertas();
   verificarCumpleanios();
+  actualizarMenuPlan(plan);
 };
 
 // ── MASCOTAS ──
@@ -2396,6 +2412,47 @@ window.paVolver = function() {
   document.getElementById('pa-lista').style.display = 'block';
   document.getElementById('pa-detalle-wrap').classList.remove('show');
 };
+
+// ════════════════════════════════════════════
+// MENÚ POR PLAN
+// ════════════════════════════════════════════
+
+function actualizarMenuPlan(plan) {
+  const esBasico    = plan === 'basico' || plan === 'protector' || plan === 'anual';
+  const esProtector = plan === 'protector' || plan === 'anual';
+
+  // Items del plan Básico
+  ['nav-historial','nav-vetia','nav-auxilios','nav-cartilla'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (esBasico) {
+      el.classList.remove('bloqueado');
+      el.onclick = function(){ goDash(id.replace('nav-',''), this); };
+    } else {
+      el.classList.add('bloqueado');
+      el.onclick = function(e){ e.stopPropagation(); goPage('precios'); };
+    }
+  });
+
+  // Items del plan Protector
+  ['nav-alimentacion','nav-sintomas','nav-score'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (esProtector) {
+      el.classList.remove('bloqueado');
+      el.onclick = function(){ goDash(id.replace('nav-',''), this); };
+    } else {
+      el.classList.add('bloqueado');
+      el.onclick = function(e){ e.stopPropagation(); goPage('precios'); };
+    }
+  });
+
+  // Colorear las secciones según acceso
+  const secBasico = document.getElementById('nav-section-basico');
+  const secProtector = document.getElementById('nav-section-protector');
+  if (secBasico) secBasico.style.color = esBasico ? 'rgba(0,212,170,.7)' : 'rgba(255,255,255,.25)';
+  if (secProtector) secProtector.style.color = esProtector ? 'rgba(255,217,61,.7)' : 'rgba(255,255,255,.25)';
+}
 
 // ════════════════════════════════════════════
 // CUMPLEAÑOS AUTOMÁTICO
