@@ -210,6 +210,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,250,248,
 .chip-gratis{background:rgba(255,107,107,.12);color:var(--coral);}
 .chip-basico{background:rgba(0,212,170,.12);color:#00A882;}
 .chip-protector{background:rgba(124,58,237,.12);color:var(--morado);}
+.chip-beta{background:rgba(255,159,67,.15);color:#e67e00;}
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.2rem;margin-bottom:2rem;}
 .dash-stat{background:#fff;border-radius:18px;padding:1.4rem;box-shadow:0 3px 14px rgba(0,0,0,.05);}
 .ds-icon{font-size:1.8rem;margin-bottom:.6rem;display:block;}
@@ -1270,11 +1271,11 @@ window.loadDashboard = async function() {
 
   document.getElementById('dashNombre').textContent = nombre.split(' ')[0];
   const chip = document.getElementById('dashChip');
-  const chips = {gratis:['chip-gratis','Plan Gratuito'],basico:['chip-basico','Plan Básico'],protector:['chip-protector','Plan Protector'],anual:['chip-protector','Plan Anual']};
+  const chips = {gratis:['chip-gratis','Plan Gratuito'],basico:['chip-basico','Plan Básico'],protector:['chip-protector','Plan Protector'],anual:['chip-protector','Plan Anual'],beta_gratis:['chip-beta','Beta Gratuito'],beta_basico:['chip-beta','Beta Básico'],beta_protector:['chip-beta','Beta Protector']};
   const [cls, txt] = chips[plan] || chips.gratis;
   chip.className = 'plan-chip ' + cls;
   chip.textContent = txt;
-  document.getElementById('upgradeBanner').style.display = plan === 'gratis' ? 'flex' : 'none';
+  document.getElementById('upgradeBanner').style.display = (plan === 'gratis' || plan === 'beta_gratis') ? 'flex' : 'none';
   document.getElementById('perfilNombre').value = nombre;
   document.getElementById('perfilEmail').value = currentUser.email || '';
   document.getElementById('perfilPlan').value = txt;
@@ -1337,10 +1338,11 @@ window.saveMascota = async function() {
   const nombre = document.getElementById('mNombre').value.trim();
   const especie = document.getElementById('mEspecie').value;
   if (!nombre || !especie) { toast('err', 'Nombre y especie son obligatorios'); return; }
-  const limites = { gratis: 1, basico: 3, protector: 999, anual: 999 };
   const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = userSnap.exists() ? (userSnap.data().plan || 'gratis') : 'gratis';
-  const limite = limites[plan] ?? 1;
+  const nivel_m = getNivelAcceso(plan);
+  const limites = { gratis: 1, basico: 3, protector: 999 };
+  const limite = limites[nivel_m] ?? 1;
   if (userMascotas.length >= limite) {
     const nombres = { gratis: 'Gratuito (máx. 1)', basico: 'Básico (máx. 3)', protector: 'Protector' };
     toast('err', `Tu plan ${nombres[plan]} no permite más mascotas. ¡Mejora tu plan!`);
@@ -1390,7 +1392,7 @@ window.saveHistorial = async function() {
   if (!mascotaId || !desc || !fecha) { toast('err', 'Completa los campos obligatorios'); return; }
   const userSnap2 = await getDoc(doc(db, 'users', currentUser.uid));
   const plan2 = userSnap2.exists() ? (userSnap2.data().plan || 'gratis') : 'gratis';
-  if (plan2 === 'gratis') {
+  if (getNivelAcceso(plan2) === 'gratis') {
     const histSnap = await getDocs(query(collection(db, 'historial'), where('userId','==',currentUser.uid)));
     if (histSnap.size >= 5) {
       toast('err', 'Plan Gratuito: máx. 5 registros médicos. ¡Mejora tu plan!'); return;
@@ -1451,7 +1453,7 @@ window.saveAlerta = async function() {
   if (!mascotaId || !titulo || !fecha) { toast('err', 'Completa todos los campos'); return; }
   const userSnap3 = await getDoc(doc(db, 'users', currentUser.uid));
   const plan3 = userSnap3.exists() ? (userSnap3.data().plan || 'gratis') : 'gratis';
-  if (plan3 === 'gratis') {
+  if (getNivelAcceso(plan3) === 'gratis') {
     const alertSnap = await getDocs(query(collection(db, 'alertas'), where('userId','==',currentUser.uid), where('activa','==',true)));
     if (alertSnap.size >= 3) {
       toast('err', 'Plan Gratuito: máx. 3 alertas activas. ¡Mejora tu plan!'); return;
@@ -1554,7 +1556,7 @@ async function initScore() {
   const snap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
 
-  if (plan !== 'protector' && plan !== 'anual') {
+  if (getNivelAcceso(plan) !== 'protector') {
     document.getElementById('score-bloqueado-panel').style.display = 'block';
     document.getElementById('score-contenido').style.display = 'none';
     return;
@@ -1706,7 +1708,7 @@ async function initSintomas() {
   const snap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
 
-  if (plan !== 'protector' && plan !== 'anual') {
+  if (getNivelAcceso(plan) !== 'protector') {
     document.getElementById('sint-bloqueado').style.display = 'block';
     document.getElementById('sint-contenido').style.display = 'none';
     return;
@@ -1845,7 +1847,7 @@ async function initAlimentacion() {
   const snap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
 
-  if (plan !== 'protector' && plan !== 'anual') {
+  if (getNivelAcceso(plan) !== 'protector') {
     document.getElementById('alim-bloqueado').style.display = 'block';
     document.getElementById('alim-contenido').style.display = 'none';
     return;
@@ -1960,7 +1962,7 @@ async function initVetIA() {
   const snap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
 
-  if (plan === 'gratis') {
+  if (getNivelAcceso(plan) === 'gratis') {
     document.getElementById('vetia-bloqueado').style.display = 'block';
     document.getElementById('vetia-chat').style.display = 'none';
     return;
@@ -1978,7 +1980,7 @@ async function initVetIA() {
   ));
   const usadas = consultasSnap.size;
 
-  if (plan === 'basico') {
+  if (getNivelAcceso(plan) === 'basico') {
     const restantes = LIMITE_BASICO - usadas;
     document.getElementById('vetia-contador').textContent = `💬 ${restantes} consultas restantes este mes`;
     if (restantes <= 0) {
@@ -2004,9 +2006,9 @@ window.enviarVetIA = async function() {
 
   const snap = await getDoc(doc(db, 'users', currentUser.uid));
   const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
-  if (plan === 'gratis') return;
+  if (getNivelAcceso(plan) === 'gratis') return;
 
-  if (plan === 'basico') {
+  if (getNivelAcceso(plan) === 'basico') {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
     const consultasSnap = await getDocs(query(
@@ -2605,9 +2607,19 @@ window.cerrarDrawer = function() {
 };
 
 // Actualizar estado bloqueado en drawer según plan
+// ── HELPER: nivel de acceso real según plan ──
+function getNivelAcceso(plan) {
+  const mapa = {
+    gratis: 'gratis', basico: 'basico', protector: 'protector', anual: 'protector',
+    beta_gratis: 'gratis', beta_basico: 'basico', beta_protector: 'protector'
+  };
+  return mapa[plan] || 'gratis';
+}
+
 function actualizarDrawerPlan(plan) {
-  const esBasico    = plan === 'basico' || plan === 'protector' || plan === 'anual';
-  const esProtector = plan === 'protector' || plan === 'anual';
+  const nivel = getNivelAcceso(plan);
+  const esBasico    = nivel === 'basico' || nivel === 'protector';
+  const esProtector = nivel === 'protector';
 
   ['mdi-historial','mdi-vetia','mdi-auxilios','mdi-cartilla'].forEach(id => {
     const el = document.getElementById(id);
@@ -2628,8 +2640,9 @@ function actualizarDrawerPlan(plan) {
 // ════════════════════════════════════════════
 
 function actualizarMenuPlan(plan) {
-  const esBasico    = plan === 'basico' || plan === 'protector' || plan === 'anual';
-  const esProtector = plan === 'protector' || plan === 'anual';
+  const nivel = getNivelAcceso(plan);
+  const esBasico    = nivel === 'basico' || nivel === 'protector';
+  const esProtector = nivel === 'protector';
 
   // Items del plan Básico
   ['nav-historial','nav-vetia','nav-auxilios','nav-cartilla'].forEach(id => {
