@@ -517,6 +517,64 @@ table.tbl{width:100%;border-collapse:collapse;}
 </div><!-- /app -->
 
 <!-- MODAL USUARIO -->
+<!-- MODAL NUEVO USUARIO -->
+<div class="modal-overlay" id="newUserModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">
+      <span>➕ Crear usuario</span>
+      <button class="modal-close" onclick="closeNewUserModal()">✕</button>
+    </div>
+    <div class="auth-msg msg-error" id="nuErr" style="padding:.6rem .9rem;border-radius:10px;font-size:.83rem;font-weight:700;margin-bottom:1rem;display:none;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--coral);"></div>
+    <div class="m-row">
+      <div class="m-field" style="grid-column:1/-1;">
+        <label>Nombre completo *</label>
+        <input class="m-input" id="nu-nombre" placeholder="Nombre del usuario">
+      </div>
+    </div>
+    <div class="m-row">
+      <div class="m-field">
+        <label>Correo electrónico *</label>
+        <input class="m-input" type="email" id="nu-email" placeholder="correo@ejemplo.com">
+      </div>
+      <div class="m-field">
+        <label>Contraseña *</label>
+        <input class="m-input" type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
+      </div>
+    </div>
+    <div class="m-row">
+      <div class="m-field">
+        <label>Plan inicial</label>
+        <select class="m-input" id="nu-plan">
+          <option value="gratis">🆓 Gratuito</option>
+          <option value="basico">⭐ Básico</option>
+          <option value="protector">👑 Protector</option>
+          <option value="anual">🏆 Anual</option>
+          <option value="beta_gratis">🧪 Beta Gratuito</option>
+          <option value="beta_basico">🧪 Beta Básico</option>
+          <option value="beta_protector" selected>🧪 Beta Protector</option>
+        </select>
+      </div>
+      <div class="m-field">
+        <label>WhatsApp (opcional)</label>
+        <input class="m-input" id="nu-whatsapp" placeholder="52477...">
+      </div>
+    </div>
+    <div class="m-row">
+      <div class="m-field" style="grid-column:1/-1;">
+        <label>Notas internas (opcional)</label>
+        <textarea class="nota-input" id="nu-notas" placeholder="Ej: Usuario beta referido por..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:.8rem;margin-top:.5rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="nu-btn" onclick="crearUsuario()">➕ Crear usuario</button>
+      <button class="btn btn-ghost" onclick="closeNewUserModal()">Cancelar</button>
+    </div>
+    <div style="font-size:.75rem;color:#aaa;font-weight:600;margin-top:.8rem;">
+      ⚠️ Se crea la cuenta directamente en Firebase Auth + Firestore. El usuario podrá iniciar sesión con estas credenciales.
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="userModal">
   <div class="modal">
     <div class="modal-title">
@@ -576,7 +634,7 @@ table.tbl{width:100%;border-collapse:collapse;}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, deleteDoc, query, orderBy, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, addDoc, deleteDoc, query, orderBy, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDge0HB01CqPJHX6SdR_fneiZP0naQbusI",
@@ -809,7 +867,118 @@ window.guardarNota = async function(){
 };
 
 window.openNewUser = function(){
-  showToast('warn','🔜 Registro desde la app principal');
+  // Limpiar formulario
+  ['nu-nombre','nu-email','nu-pass','nu-whatsapp','nu-notas'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('nu-plan').value = 'beta_protector';
+  document.getElementById('nuErr').style.display = 'none';
+  document.getElementById('nu-btn').disabled = false;
+  document.getElementById('nu-btn').textContent = '➕ Crear usuario';
+  document.getElementById('newUserModal').classList.add('open');
+};
+
+window.closeNewUserModal = function(){
+  document.getElementById('newUserModal').classList.remove('open');
+};
+
+window.crearUsuario = async function(){
+  const nombre   = document.getElementById('nu-nombre').value.trim();
+  const email    = document.getElementById('nu-email').value.trim();
+  const pass     = document.getElementById('nu-pass').value;
+  const plan     = document.getElementById('nu-plan').value;
+  const whatsapp = document.getElementById('nu-whatsapp').value.trim();
+  const notas    = document.getElementById('nu-notas').value.trim();
+  const errEl    = document.getElementById('nuErr');
+  const btn      = document.getElementById('nu-btn');
+
+  errEl.style.display = 'none';
+
+  if(!nombre || !email || !pass){
+    errEl.textContent = 'Nombre, correo y contraseña son obligatorios.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(pass.length < 6){
+    errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Creando...';
+
+  try {
+    // Crear usuario en Firebase Auth usando el API REST
+    // (no podemos usar createUserWithEmailAndPassword desde el admin
+    //  sin desloguear al admin actual, así que usamos el REST API)
+    const apiKey = 'AIzaSyDge0HB01CqPJHX6SdR_fneiZP0naQbusI';
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass, returnSecureToken: true })
+    });
+    const data = await res.json();
+
+    if(data.error){
+      const msgs = {
+        'EMAIL_EXISTS': 'Este correo ya está registrado.',
+        'INVALID_EMAIL': 'El correo no es válido.',
+        'WEAK_PASSWORD : Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.'
+      };
+      errEl.textContent = msgs[data.error.message] || 'Error: ' + data.error.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '➕ Crear usuario';
+      return;
+    }
+
+    const uid = data.localId;
+
+    // Actualizar displayName via REST
+    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: data.idToken, displayName: nombre })
+    });
+
+    // Crear documento en Firestore
+    await setDoc(doc(db, 'users', uid), {
+      nombre,
+      email,
+      plan,
+      status: 'activo',
+      whatsapp: whatsapp || null,
+      notas: notas || '',
+      createdAt: new Date().toISOString(),
+      creadoPorAdmin: true
+    });
+
+    // Agregar al array local
+    users.push({
+      id: uid,
+      nombre,
+      email,
+      plan,
+      status: 'activo',
+      fecha: new Date().toLocaleDateString('es-MX'),
+      ultimoPago: '—',
+      notas: notas || ''
+    });
+
+    renderUsers();
+    updateSummaryStats();
+    renderNotifPanel();
+    closeNewUserModal();
+    showToast('success', `✅ Usuario ${nombre} creado con plan ${planNames[plan]||plan}`);
+
+  } catch(err){
+    errEl.textContent = 'Error inesperado: ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '➕ Crear usuario';
+  }
 };
 
 // ── RESET HISTORIAL PAGOS USUARIO ──
@@ -1071,6 +1240,9 @@ function showToast(type,msg){ window.showToast(type,msg); }
 
 document.getElementById('userModal').addEventListener('click', e => {
   if(e.target === document.getElementById('userModal')) window.closeModal();
+});
+document.getElementById('newUserModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('newUserModal')) window.closeNewUserModal();
 });
 
 // ── NOTIFICACIONES ──
