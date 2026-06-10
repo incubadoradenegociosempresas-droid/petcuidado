@@ -609,7 +609,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
   </section>
   <footer>
     <div class="foot-logo">🐾 Pet<span>Cuidado</span></div>
-    <div class="foot-links"><a onclick="goPage('home')">Inicio</a><a onclick="goPage('precios')">Precios</a><a onclick="goPage('login')">Iniciar sesión</a></div>
+    <div class="foot-links"><a onclick="goPage('home')">Inicio</a><a onclick="goPage('precios')">Precios</a><a onclick="goPage('login')">Iniciar sesión</a><a onclick="goPage('deslinde')" style="color:rgba(255,255,255,.35);">Deslinde de responsabilidad</a></div>
     <div class="foot-copy">© 2026 PetCuidado · Hecho con ❤️ en México</div>
   </footer>
 </div>
@@ -649,6 +649,12 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
       <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" type="text" id="regNombre" placeholder="Tu nombre"></div>
       <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" type="email" id="regEmail" placeholder="tu@correo.com"></div>
       <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" type="password" id="regPass" placeholder="Mínimo 6 caracteres"></div>
+      <div style="display:flex;align-items:flex-start;gap:.7rem;margin-bottom:1rem;padding:.75rem;background:#f8fafc;border-radius:10px;border:1px solid #e8e8e8;">
+        <input type="checkbox" id="regDeslinde" style="margin-top:3px;width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+        <label for="regDeslinde" style="font-size:.8rem;color:#555;font-weight:600;cursor:pointer;line-height:1.5;">
+          He leído y acepto el <a onclick="goPage('deslinde')" style="color:var(--morado);font-weight:800;cursor:pointer;">Deslinde de responsabilidad</a>. Entiendo que PetCuidado y su IA no reemplazan la atención veterinaria profesional.
+        </label>
+      </div>
       <button class="auth-btn btn-verde" onclick="doRegistro()">🚀 Crear cuenta gratis</button>
       <div class="auth-divider">o</div>
       <button class="auth-btn btn-google" onclick="doLoginGoogle()">
@@ -1111,7 +1117,85 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
   </div>
   <footer>
     <div class="foot-logo">🐾 Pet<span>Cuidado</span></div>
-    <div class="foot-links"><a onclick="goPage('home')">Inicio</a><a onclick="goPage('login')">Iniciar sesión</a></div>
+    <div class="foot-links"><a onclick="goPage('home')">Inicio</a><a onclick="goPage('login')">Iniciar sesión</a><a onclick="goPage('deslinde')" style="color:rgba(255,255,255,.35);">Deslinde</a></div>
+    <div class="foot-copy">© 2026 PetCuidado · Hecho con ❤️ en México</div>
+  </footer>
+</div>
+
+<!-- DESLINDE DE RESPONSABILIDAD -->
+<div id="page-deslinde" class="page">
+  <div style="max-width:780px;margin:0 auto;padding:3rem 1.5rem 4rem;">
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <div style="font-size:3rem;margin-bottom:.8rem;">⚖️</div>
+      <h1 style="font-family:'Righteous',cursive;font-size:2rem;color:var(--dark);margin-bottom:.5rem;">Deslinde de Responsabilidad</h1>
+      <p style="color:#aaa;font-size:.9rem;font-weight:600;">PetCuidado · Última actualización: Junio 2026</p>
+    </div>
+
+    <div style="background:#fff;border-radius:20px;padding:2rem 2.5rem;box-shadow:0 4px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:1.8rem;">
+
+      <div style="background:rgba(255,107,107,.07);border:2px solid rgba(255,107,107,.2);border-radius:14px;padding:1.2rem 1.5rem;">
+        <div style="font-weight:900;font-size:1rem;color:var(--coral);margin-bottom:.5rem;">⚠️ Aviso importante</div>
+        <p style="font-size:.88rem;color:#555;font-weight:600;line-height:1.7;">PetCuidado es una herramienta de apoyo informativo. <strong>No es un servicio veterinario profesional</strong> y no debe utilizarse como sustituto de la atención médica veterinaria presencial. Ante cualquier emergencia o duda sobre la salud de tu mascota, consulta siempre a un médico veterinario certificado.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">1. Naturaleza del servicio</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">PetCuidado ofrece herramientas digitales de apoyo para el cuidado y seguimiento de mascotas, incluyendo funciones de inteligencia artificial (IA). El contenido generado por la IA — incluyendo el Vet IA, Verificador de Síntomas, Plan de Alimentación y Score de Salud — es de carácter <strong>informativo y orientativo únicamente</strong>. Ninguna función de la aplicación constituye un diagnóstico médico veterinario, prescripción de medicamentos, ni tratamiento clínico de ningún tipo.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">2. Limitaciones de la inteligencia artificial</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">Los modelos de inteligencia artificial utilizados en PetCuidado pueden cometer errores, generar información incompleta o desactualizada. La IA no puede examinar físicamente a tu mascota, analizar muestras de laboratorio, ni considerar el historial clínico completo del animal. <strong>PetCuidado, sus socios tecnológicos y sus desarrolladores no se hacen responsables</strong> de las decisiones tomadas con base en el contenido generado por la IA.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">3. Emergencias veterinarias</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">En situaciones de emergencia que pongan en riesgo la vida de tu mascota — incluyendo pero no limitado a: dificultad respiratoria, convulsiones, intoxicación, trauma grave, sangrado severo o pérdida de consciencia — <strong>debes acudir de inmediato a un veterinario o clínica de urgencias</strong>. No esperes ni consultes la aplicación antes de buscar atención médica presencial.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">4. Guía de primeros auxilios</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">La guía de primeros auxilios incluida en la aplicación tiene como propósito proporcionar orientación básica mientras se traslada a la mascota a atención veterinaria. <strong>No reemplaza la capacitación profesional</strong> ni el juicio clínico de un veterinario. PetCuidado no garantiza la efectividad de las medidas descritas en todos los casos.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">5. Planes de alimentación</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">Los planes de alimentación generados por IA son sugerencias basadas en parámetros generales de la especie, raza y peso. <strong>No consideran condiciones médicas específicas</strong> como diabetes, insuficiencia renal, alergias diagnosticadas u otras patologías. Antes de realizar cambios significativos en la dieta de tu mascota, especialmente si tiene condiciones de salud preexistentes, consulta a un veterinario o especialista en nutrición animal.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">6. Score de salud</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">El Score de Salud Mensual es un indicador de seguimiento basado en el registro de actividades dentro de la aplicación. <strong>No refleja el estado de salud real de tu mascota</strong> ni sustituye una evaluación veterinaria. Un score alto no garantiza que tu mascota esté sana; un score bajo no indica necesariamente que esté enferma.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">7. Cartilla QR y red de extravío</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">PetCuidado no garantiza la recuperación de mascotas extraviadas. La cartilla QR y la red de extravío son herramientas de apoyo comunitario. <strong>La empresa no asume responsabilidad</strong> por la pérdida, daño o muerte de mascotas en ninguna circunstancia.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">8. Limitación de responsabilidad</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">En la máxima medida permitida por la ley aplicable, PetCuidado, sus directores, empleados, socios y proveedores de tecnología <strong>no serán responsables</strong> por daños directos, indirectos, incidentales, especiales o consecuentes derivados del uso o imposibilidad de uso de la aplicación, incluyendo pero no limitado a: lesiones, enfermedad o muerte de mascotas; pérdidas económicas derivadas de decisiones tomadas con base en el contenido de la aplicación.</p>
+      </div>
+
+      <div>
+        <h2 style="font-weight:900;font-size:1rem;color:var(--dark);margin-bottom:.7rem;">9. Aceptación</h2>
+        <p style="font-size:.87rem;color:#666;line-height:1.75;font-weight:600;">Al crear una cuenta y utilizar PetCuidado, el usuario declara haber leído, comprendido y aceptado íntegramente este Deslinde de Responsabilidad. Si no estás de acuerdo con estos términos, debes abstenerte de utilizar la aplicación.</p>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:12px;padding:1.2rem 1.5rem;text-align:center;">
+        <p style="font-size:.82rem;color:#999;font-weight:700;">¿Tienes dudas sobre la salud de tu mascota?</p>
+        <p style="font-size:.82rem;color:#aaa;font-weight:600;margin-top:.3rem;">Siempre consulta a un <strong style="color:var(--morado);">médico veterinario certificado</strong>.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;">
+      <button onclick="history.back()" style="background:none;border:2px solid #e0e0e0;border-radius:50px;padding:.7rem 1.8rem;font-weight:800;font-size:.88rem;cursor:pointer;color:#888;">← Regresar</button>
+    </div>
+  </div>
+  <footer>
+    <div class="foot-logo">🐾 Pet<span>Cuidado</span></div>
+    <div class="foot-links"><a onclick="goPage('home')">Inicio</a><a onclick="goPage('precios')">Precios</a></div>
     <div class="foot-copy">© 2026 PetCuidado · Hecho con ❤️ en México</div>
   </footer>
 </div>
@@ -1239,6 +1323,8 @@ window.doRegistro = async function() {
   err.classList.remove('show'); ok.classList.remove('show');
   if (!nombre || !email || !pass) { showMsg(err, 'Completa todos los campos.'); return; }
   if (pass.length < 6) { showMsg(err, 'La contraseña debe tener al menos 6 caracteres.'); return; }
+  const deslinde = document.getElementById('regDeslinde');
+  if (deslinde && !deslinde.checked) { showMsg(err, '⚠️ Debes aceptar el Deslinde de responsabilidad para continuar.'); return; }
   loading.style.display = 'block';
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
