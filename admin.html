@@ -264,7 +264,10 @@ table.tbl{width:100%;border-collapse:collapse;}
 
       <!-- ══ RESUMEN ══ -->
       <div id="panel-resumen" class="panel active">
-        <div class="page-title">📊 Resumen general</div>
+        <div class="page-title" style="justify-content:space-between;">
+          <span>📊 Resumen general</span>
+          <button class="btn btn-warn btn-sm" onclick="resetDatosPrueba()" title="Limpia usuarios y pagos de prueba">🔄 Resetear datos de prueba</button>
+        </div>
 
         <div class="stats-row">
           <div class="stat-card sc-morado">
@@ -522,6 +525,7 @@ table.tbl{width:100%;border-collapse:collapse;}
     <div style="margin-bottom:1rem;">
       <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">📋 Historial de pagos</label>
       <div id="mPagoHist"></div>
+      <button class="btn btn-warn btn-sm" style="margin-top:.6rem;" onclick="resetPagosUsuario()">🗑️ Limpiar historial de pagos</button>
     </div>
     <div>
       <label style="font-size:.78rem;font-weight:800;color:#888;display:block;margin-bottom:.5rem;">📝 Notas internas</label>
@@ -534,136 +538,82 @@ table.tbl{width:100%;border-collapse:collapse;}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, deleteDoc, query, orderBy, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDge0HB01CqPJHX6SdR_fneiZP0naQbusI",
-  authDomain: "petcuidado-a7cb8.firebaseapp.com",
-  projectId: "petcuidado-a7cb8",
-  storageBucket: "petcuidado-a7cb8.firebasestorage.app",
-  messagingSenderId: "770470273240",
-  appId: "1:770470273240:web:c6119492e6e0ef615377ad"
-};
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-
-// ── CONFIG ──
+<script>
+// ── DATA ──
 const ADMIN = { email:'admin@petcuidado.com', pass:'admin2026' };
+
+let users = [
+  { id:1, nombre:'María López',    email:'maria@gmail.com',    plan:'gratis',    status:'activo',    fecha:'05/06/2026', ultimoPago:'—',         notas:'' },
+  { id:2, nombre:'Carlos Ruiz',    email:'carlos@hotmail.com', plan:'basico',    status:'activo',    fecha:'04/06/2026', ultimoPago:'04/06/2026', notas:'Pagó por SPEI, comprobante enviado por WA.' },
+  { id:3, nombre:'Ana Martínez',   email:'ana@gmail.com',      plan:'protector', status:'activo',    fecha:'02/06/2026', ultimoPago:'02/06/2026', notas:'' },
+  { id:4, nombre:'Pedro Soto',     email:'pedro@outlook.com',  plan:'gratis',    status:'bloqueado', fecha:'01/06/2026', ultimoPago:'—',          notas:'Cuenta bloqueada por comportamiento inapropiado.' },
+  { id:5, nombre:'Laura Vega',     email:'laura@gmail.com',    plan:'protector', status:'activo',    fecha:'31/05/2026', ultimoPago:'31/05/2026', notas:'' },
+  { id:6, nombre:'Diego Flores',   email:'diego@yahoo.com',    plan:'gratis',    status:'activo',    fecha:'30/05/2026', ultimoPago:'—',          notas:'' },
+];
+
+let pagosHist = [
+  { id:1, userId:2, nombre:'Carlos Ruiz',  email:'carlos@hotmail.com', monto:79,  plan:'basico',    fecha:'04/06/2026 08:30', ref:'SPEI-001234', status:'confirmado' },
+  { id:2, userId:3, nombre:'Ana Martínez', email:'ana@gmail.com',      monto:169, plan:'protector', fecha:'03/06/2026 14:15', ref:'SPEI-001198', status:'pendiente' },
+  { id:3, userId:5, nombre:'Laura Vega',   email:'laura@gmail.com',    monto:169, plan:'protector', fecha:'01/06/2026 11:00', ref:'SPEI-001102', status:'confirmado' },
+  { id:4, userId:6, nombre:'Diego Flores', email:'diego@yahoo.com',    monto:79,  plan:'basico',    fecha:'05/06/2026 07:00', ref:'SPEI-001280', status:'pendiente' },
+  { id:5, userId:1, nombre:'María López',  email:'maria@gmail.com',    monto:169, plan:'protector', fecha:'02/06/2026 09:45', ref:'SPEI-001155', status:'confirmado' },
+];
+
+let currentModal = null;
 const planNames = { gratis:'Gratuito', basico:'Básico', protector:'Protector', anual:'Anual' };
 const planBadge  = { gratis:'b-g', basico:'b-b', protector:'b-p', anual:'b-a' };
-const planMRR    = { gratis:0, basico:79, protector:169, anual:140 };
-
-let users = [];
-let pagosHist = [];
-let currentModal = null;
-let _planF='', _statusF='', _textF='';
-let chartsInit = false;
-let mrrChart = null, planesChart = null;
 
 // ── LOGIN ──
-window.doLogin = async function(){
+function doLogin(){
   const e = document.getElementById('lEmail').value.trim();
   const p = document.getElementById('lPass').value;
   const err = document.getElementById('lErr');
-  if(e !== ADMIN.email){
-    err.classList.add('show'); return;
-  }
-  try {
-    await signInWithEmailAndPassword(auth, e, p);
+  if(e === ADMIN.email && p === ADMIN.pass){
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    loadData();
-  } catch(error) {
+    initCharts();
+    renderUsers();
+    renderPagos();
+    renderActividad();
+  } else {
     err.classList.add('show');
   }
-};
-window.doLogout = async function(){
-  await signOut(auth);
+}
+function doLogout(){
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').classList.remove('visible');
   document.getElementById('lPass').value = '';
   document.getElementById('lErr').classList.remove('show');
-};
-document.addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
-
-// ── CARGAR DATOS DESDE FIREBASE ──
-async function loadData(){
-  showToast('info','⏳ Cargando datos...');
-  try {
-    // Cargar usuarios
-    const usersSnap = await getDocs(collection(db, 'users'));
-    users = usersSnap.docs.map(d => ({
-      id: d.id,
-      nombre: d.data().nombre || d.data().displayName || 'Sin nombre',
-      email: d.data().email || '',
-      plan: d.data().plan || 'gratis',
-      status: d.data().status || 'activo',
-      fecha: d.data().createdAt ? new Date(typeof d.data().createdAt === 'string' ? d.data().createdAt : d.data().createdAt.toDate()).toLocaleDateString('es-MX') : '—',
-      ultimoPago: d.data().ultimoPago ? new Date(typeof d.data().ultimoPago === 'string' ? d.data().ultimoPago : d.data().ultimoPago.toDate()).toLocaleDateString('es-MX') : '—',
-      notas: d.data().notas || ''
-    }));
-
-    // Cargar pagos
-    const pagosSnap = await getDocs(collection(db, 'pagos'));
-    pagosHist = pagosSnap.docs.map(d => ({
-      id: d.id,
-      userId: d.data().userId || '',
-      nombre: d.data().nombre || '',
-      email: d.data().email || '',
-      monto: d.data().monto || 0,
-      plan: d.data().plan || 'gratis',
-      fecha: d.data().fecha ? new Date(typeof d.data().fecha === 'string' ? d.data().fecha : d.data().fecha.toDate()).toLocaleString('es-MX') : d.data().fechaStr || '—',
-      ref: d.data().ref || '—',
-      status: d.data().status || 'pendiente'
-    }));
-
-    renderUsers();
-    renderPagos();
-    renderActividad();
-    updateSummaryStats();
-    initCharts();
-    showToast('success','✅ Datos cargados desde Firebase');
-  } catch(err){
-    console.error(err);
-    showToast('error','❌ Error al cargar datos: ' + err.message);
-  }
 }
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 // ── NAVEGACIÓN ──
-window.goPanel = function(id, el){
+function goPanel(id, el){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.s-item').forEach(i => i.classList.remove('active'));
   if(el) el.classList.add('active');
   if(id==='ingresos') setTimeout(initCharts2, 100);
-};
+}
 
 // ── RENDER USUARIOS ──
-function renderUsers(){
+function renderUsers(filtro='', planFiltro='', statusFiltro=''){
   const tbody = document.getElementById('usersTbody');
   const filtered = users.filter(u => {
-    const matchText = !_textF || u.nombre.toLowerCase().includes(_textF) || u.email.toLowerCase().includes(_textF);
-    const matchPlan = !_planF || u.plan === _planF;
-    const matchStatus = !_statusF || u.status === _statusF;
+    const matchText = !filtro || u.nombre.toLowerCase().includes(filtro) || u.email.toLowerCase().includes(filtro);
+    const matchPlan = !planFiltro || u.plan === planFiltro;
+    const matchStatus = !statusFiltro || u.status === statusFiltro;
     return matchText && matchPlan && matchStatus;
   });
-  if(filtered.length === 0){
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;font-size:.85rem;padding:2rem;">Sin usuarios registrados</td></tr>';
-    return;
-  }
   tbody.innerHTML = filtered.map(u => `
     <tr data-id="${u.id}" data-plan="${u.plan}" data-status="${u.status}">
       <td>
         <div style="font-weight:800;">${u.nombre}</div>
         <div style="font-size:.76rem;color:#aaa;">${u.email}</div>
       </td>
-      <td><span class="badge ${planBadge[u.plan]||'b-g'}">${planNames[u.plan]||u.plan}</span></td>
+      <td><span class="badge ${planBadge[u.plan]}">${planNames[u.plan]}</span></td>
       <td>
-        <select class="plan-sel" onchange="cambiarPlan('${u.id}',this.value)">
+        <select class="plan-sel" onchange="cambiarPlan(${u.id},this.value)">
           ${['gratis','basico','protector','anual'].map(p=>`<option value="${p}" ${u.plan===p?'selected':''}>${planNames[p]}</option>`).join('')}
         </select>
       </td>
@@ -674,54 +624,42 @@ function renderUsers(){
       <td>${u.fecha}</td>
       <td>${u.ultimoPago}</td>
       <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="openModal('${u.id}')">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModal(${u.id})">👁 Ver</button>
         ${u.status==='bloqueado'
-          ? `<button class="btn btn-success btn-sm" onclick="toggleStatus('${u.id}')">✓ Desbloquear</button>`
-          : `<button class="btn btn-danger btn-sm" onclick="toggleStatus('${u.id}')">🚫 Bloquear</button>`}
+          ? `<button class="btn btn-success btn-sm" onclick="toggleStatus(${u.id})">✓ Desbloquear</button>`
+          : `<button class="btn btn-danger btn-sm" onclick="toggleStatus(${u.id})">🚫 Bloquear</button>`}
       </td>
     </tr>
   `).join('');
 }
 
-window.filterUsers    = function(v){ _textF=v.toLowerCase(); renderUsers(); };
-window.filterByPlan   = function(v){ _planF=v; renderUsers(); };
-window.filterByStatus = function(v){ _statusF=v; renderUsers(); };
+let _planF='', _statusF='', _textF='';
+function filterUsers(v){ _textF=v.toLowerCase(); renderUsers(_textF,_planF,_statusF); }
+function filterByPlan(v){ _planF=v; renderUsers(_textF,_planF,_statusF); }
+function filterByStatus(v){ _statusF=v; renderUsers(_textF,_planF,_statusF); }
 
-window.cambiarPlan = async function(id, plan){
+function cambiarPlan(id, plan){
   const u = users.find(x=>x.id===id);
   if(!u) return;
-  try {
-    await updateDoc(doc(db,'users',id), {
-      plan,
-      ultimoPago: plan !== 'gratis' ? serverTimestamp() : u.ultimoPago
-    });
-    u.plan = plan;
-    if(plan !== 'gratis') u.ultimoPago = new Date().toLocaleDateString('es-MX');
-    renderUsers();
-    updateSummaryStats();
-    showToast('success', `✓ Plan de ${u.nombre} cambiado a ${planNames[plan]}`);
-  } catch(err){
-    showToast('error','❌ Error: ' + err.message);
-  }
-};
+  const old = u.plan;
+  u.plan = plan;
+  if(plan!=='gratis' && u.ultimoPago==='—') u.ultimoPago = new Date().toLocaleDateString('es-MX');
+  renderUsers(_textF,_planF,_statusF);
+  updateSummaryStats();
+  showToast('success', `✓ Plan de ${u.nombre} cambiado a ${planNames[plan]}`);
+}
 
-window.toggleStatus = async function(id){
+function toggleStatus(id){
   const u = users.find(x=>x.id===id);
   if(!u) return;
-  const newStatus = u.status==='activo' ? 'bloqueado' : 'activo';
-  try {
-    await updateDoc(doc(db,'users',id), { status: newStatus });
-    u.status = newStatus;
-    renderUsers();
-    showToast(newStatus==='bloqueado'?'warn':'success',
-      newStatus==='bloqueado' ? `🚫 ${u.nombre} bloqueado` : `✓ ${u.nombre} desbloqueado`);
-  } catch(err){
-    showToast('error','❌ Error: ' + err.message);
-  }
-};
+  u.status = u.status==='activo' ? 'bloqueado' : 'activo';
+  renderUsers(_textF,_planF,_statusF);
+  showToast(u.status==='bloqueado'?'warn':'success',
+    u.status==='bloqueado' ? `🚫 ${u.nombre} bloqueado` : `✓ ${u.nombre} desbloqueado`);
+}
 
 // ── MODAL ──
-window.openModal = function(id){
+function openModal(id){
   const u = users.find(x=>x.id===id);
   if(!u) return;
   currentModal = u;
@@ -730,40 +668,74 @@ window.openModal = function(id){
   document.getElementById('mEmail').textContent   = u.email;
   document.getElementById('mFecha').textContent   = u.fecha;
   document.getElementById('mUltPago').textContent = u.ultimoPago;
-  document.getElementById('mPlan').innerHTML = `<span class="badge ${planBadge[u.plan]||'b-g'}">${planNames[u.plan]||u.plan}</span>`;
+  document.getElementById('mPlan').innerHTML = `<span class="badge ${planBadge[u.plan]}">${planNames[u.plan]}</span>`;
   document.getElementById('mEstado').innerHTML = `<span class="status-dot ${u.status==='activo'?'sd-on':'sd-bloq'}"></span>${u.status}`;
   document.getElementById('mNotas').value = u.notas||'';
-  const pagos = pagosHist.filter(p=>p.userId===id || p.email===u.email);
+  const pagos = pagosHist.filter(p=>p.userId===id);
   document.getElementById('mPagoHist').innerHTML = pagos.length
-    ? pagos.map(p=>`<div class="pago-hist-item"><div class="ph-monto">$${p.monto}</div><div class="ph-info"><div class="ph-plan">${planNames[p.plan]||p.plan} · Ref: ${p.ref}</div><div class="ph-fecha">${p.fecha}</div></div><span class="badge ${p.status==='confirmado'?'b-conf':'b-pend'}">${p.status}</span></div>`).join('')
+    ? pagos.map(p=>`<div class="pago-hist-item"><div class="ph-monto">$${p.monto}</div><div class="ph-info"><div class="ph-plan">${planNames[p.plan]} · Ref: ${p.ref}</div><div class="ph-fecha">${p.fecha}</div></div><span class="badge ${p.status==='confirmado'?'b-conf':'b-pend'}">${p.status}</span></div>`).join('')
     : '<div style="color:#aaa;font-size:.84rem;font-weight:600;">Sin pagos registrados</div>';
   document.getElementById('userModal').classList.add('open');
-};
-window.closeModal = function(){ document.getElementById('userModal').classList.remove('open'); currentModal=null; };
-window.cambiarPlanModal = async function(plan){
+}
+function closeModal(){ document.getElementById('userModal').classList.remove('open'); currentModal=null; }
+function cambiarPlanModal(plan){
   if(!currentModal) return;
-  await window.cambiarPlan(currentModal.id, plan);
+  cambiarPlan(currentModal.id, plan);
   document.getElementById('mPlan').innerHTML = `<span class="badge ${planBadge[plan]}">${planNames[plan]}</span>`;
-};
-window.toggleBlock = async function(block){
+  showToast('success',`✓ Plan actualizado a ${planNames[plan]}`);
+}
+function toggleBlock(block){
   if(!currentModal) return;
-  await window.toggleStatus(currentModal.id);
   currentModal.status = block ? 'bloqueado' : 'activo';
-};
-window.guardarNota = async function(){
+  renderUsers(_textF,_planF,_statusF);
+  showToast(block?'warn':'success', block?`🚫 Usuario bloqueado`:`✓ Usuario desbloqueado`);
+}
+function guardarNota(){
   if(!currentModal) return;
-  const nota = document.getElementById('mNotas').value;
-  try {
-    await updateDoc(doc(db,'users',currentModal.id), { notas: nota });
-    currentModal.notas = nota;
-    showToast('success','📝 Nota guardada');
-  } catch(err){
-    showToast('error','❌ Error: ' + err.message);
+  currentModal.notas = document.getElementById('mNotas').value;
+  showToast('success','📝 Nota guardada');
+}
+
+// ── RESET HISTORIAL PAGOS DE UN USUARIO ──
+function resetPagosUsuario(){
+  if(!currentModal) return;
+  if(!confirm(`¿Limpiar todo el historial de pagos de ${currentModal.nombre}?\n\nEsto no cambia su plan actual, solo borra los registros de pagos. Útil para limpiar datos de prueba.`)) return;
+  const uid = currentModal.id;
+  const antes = pagosHist.length;
+  pagosHist = pagosHist.filter(p => p.userId !== uid);
+  const eliminados = antes - pagosHist.length;
+  const u = users.find(x => x.id === uid);
+  if(u) u.ultimoPago = '—';
+  document.getElementById('mPagoHist').innerHTML = '<div style="color:#aaa;font-size:.84rem;font-weight:600;">Sin pagos registrados</div>';
+  renderPagos();
+  renderUsers(_textF,_planF,_statusF);
+  updateSummaryStats();
+  showToast('success', `🗑️ ${eliminados} pago(s) eliminado(s) de ${currentModal.nombre}`);
+}
+
+// ── RESET DATOS DE PRUEBA GLOBAL ──
+function resetDatosPrueba(){
+  if(!confirm('⚠️ ¿Resetear TODOS los datos de prueba?\n\nEsto limpia:\n• Todos los pagos registrados\n• Historial de último pago de usuarios\n• Contadores y gráficas\n\nNo elimina usuarios ni cambia sus planes actuales.')) return;
+  pagosHist = [];
+  users.forEach(u => { u.ultimoPago = '—'; });
+  renderUsers(_textF,_planF,_statusF);
+  renderPagos();
+  renderActividad();
+  updateSummaryStats();
+  if(mrrChart){ mrrChart.data.datasets[0].data=[0,0,0,0,0,0]; mrrChart.update(); }
+  if(planesChart){
+    planesChart.data.datasets[0].data=[
+      users.filter(u=>u.plan==='gratis').length,
+      users.filter(u=>u.plan==='basico').length,
+      users.filter(u=>u.plan==='protector'||u.plan==='anual').length
+    ];
+    planesChart.update();
   }
-};
-window.openNewUser = function(){
-  showToast('warn','🔜 Alta manual — registra al usuario desde la app');
-};
+  showToast('success','✅ Datos de prueba reseteados correctamente.');
+}
+function openNewUser(){
+  showToast('warn','🔜 Alta de usuario manual — próximamente');
+}
 
 // ── PAGOS ──
 function renderPagos(){
@@ -776,12 +748,12 @@ function renderPagos(){
     <tr id="prow-${p.id}">
       <td><div style="font-weight:800;">${p.nombre}</div><div style="font-size:.75rem;color:#aaa;">${p.email}</div></td>
       <td><strong>$${p.monto}</strong></td>
-      <td><span class="badge ${planBadge[p.plan]||'b-g'}">${planNames[p.plan]||p.plan}</span></td>
+      <td><span class="badge ${planBadge[p.plan]}">${planNames[p.plan]}</span></td>
       <td>${p.fecha}</td>
       <td style="font-size:.78rem;color:#aaa;">${p.ref}</td>
       <td style="display:flex;gap:.4rem;">
-        <button class="btn btn-success btn-sm" onclick="confirmarPago('${p.id}')">✓ Confirmar y activar</button>
-        <button class="btn btn-danger btn-sm" onclick="rechazarPago('${p.id}')">✗ Rechazar</button>
+        <button class="btn btn-success btn-sm" onclick="confirmarPago(${p.id})">✓ Confirmar y activar</button>
+        <button class="btn btn-danger btn-sm" onclick="rechazarPago(${p.id})">✗ Rechazar</button>
       </td>
     </tr>
   `).join('') || '<tr><td colspan="6" style="text-align:center;color:#aaa;font-size:.85rem;padding:1.5rem;">✅ Sin pagos pendientes</td></tr>';
@@ -789,117 +761,80 @@ function renderPagos(){
     <tr>
       <td><div style="font-weight:800;">${p.nombre}</div><div style="font-size:.75rem;color:#aaa;">${p.email}</div></td>
       <td><strong>$${p.monto}</strong></td>
-      <td><span class="badge ${planBadge[p.plan]||'b-g'}">${planNames[p.plan]||p.plan}</span></td>
+      <td><span class="badge ${planBadge[p.plan]}">${planNames[p.plan]}</span></td>
       <td>${p.fecha}</td>
       <td>Admin</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center;color:#aaa;font-size:.85rem;padding:1.5rem;">Sin pagos confirmados</td></tr>';
+  `).join('');
 }
 
-window.confirmarPago = async function(id){
+function confirmarPago(id){
   const p = pagosHist.find(x=>x.id===id);
   if(!p) return;
-  try {
-    await updateDoc(doc(db,'pagos',id), { status:'confirmado' });
-    const u = users.find(x=>x.email===p.email);
-    if(u){
-      await updateDoc(doc(db,'users',u.id), { plan: p.plan, ultimoPago: serverTimestamp() });
-      u.plan = p.plan;
-      u.ultimoPago = new Date().toLocaleDateString('es-MX');
-    }
-    p.status = 'confirmado';
-    renderPagos();
-    renderUsers();
-    updateSummaryStats();
-    showToast('success',`✓ Pago confirmado · ${p.nombre} → ${planNames[p.plan]}`);
-  } catch(err){
-    showToast('error','❌ Error: ' + err.message);
-  }
-};
+  p.status = 'confirmado';
+  const u = users.find(x=>x.email===p.email);
+  if(u){ u.plan=p.plan; u.ultimoPago=new Date().toLocaleDateString('es-MX'); }
+  renderPagos();
+  renderUsers(_textF,_planF,_statusF);
+  updateSummaryStats();
+  showToast('success',`✓ Pago confirmado · ${p.nombre} → ${planNames[p.plan]}`);
+}
 
-window.rechazarPago = async function(id){
+function rechazarPago(id){
   const p = pagosHist.find(x=>x.id===id);
   if(!p) return;
   if(!confirm(`¿Rechazar el pago de $${p.monto} de ${p.nombre}?`)) return;
-  try {
-    await deleteDoc(doc(db,'pagos',id));
-    pagosHist = pagosHist.filter(x=>x.id!==id);
-    renderPagos();
-    showToast('error',`✗ Pago de ${p.nombre} rechazado`);
-  } catch(err){
-    showToast('error','❌ Error: ' + err.message);
-  }
-};
+  pagosHist = pagosHist.filter(x=>x.id!==id);
+  renderPagos();
+  showToast('error',`✗ Pago de ${p.nombre} rechazado`);
+}
 
 // ── ACTIVIDAD ──
 function renderActividad(){
-  const recent = [...pagosHist]
-    .sort((a,b) => b.fecha > a.fecha ? 1 : -1)
-    .slice(0,10);
-  const regRecent = [...users]
-    .sort((a,b) => b.fecha > a.fecha ? 1 : -1)
-    .slice(0,5);
-
   const events = [
-    ...recent.map(p=>({
-      icon: p.status==='confirmado'?'💰':'⭐',
-      cls: p.status==='confirmado'?'act-i-green':'act-i-orange',
-      main: (p.status==='confirmado'?'Pago confirmado':'Pago pendiente') + ' · ' + p.nombre,
-      sub: `${planNames[p.plan]||p.plan} $${p.monto} · Ref: ${p.ref}`,
-      time: p.fecha
-    })),
-    ...regRecent.map(u=>({
-      icon:'👤', cls:'act-i-blue',
-      main:'Registro · ' + u.nombre,
-      sub:'Plan ' + (planNames[u.plan]||u.plan),
-      time: u.fecha
-    }))
+    {icon:'💰',cls:'act-i-green',main:'Pago confirmado · Carlos Ruiz',sub:'Plan Básico $79 activado',time:'hace 1h'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · María López',sub:'Plan Gratuito',time:'hace 3h'},
+    {icon:'⭐',cls:'act-i-orange',main:'Transferencia recibida · Ana Martínez',sub:'$169 · Plan Protector · Pendiente',time:'hace 5h'},
+    {icon:'💰',cls:'act-i-green',main:'Pago confirmado · Laura Vega',sub:'Plan Protector $169 activado',time:'ayer 11:00'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Pedro Soto',sub:'Plan Gratuito',time:'ayer 09:22'},
+    {icon:'🚫',cls:'act-i-red',main:'Usuario bloqueado · Pedro Soto',sub:'Razón: comportamiento inapropiado',time:'ayer 10:00'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Diego Flores',sub:'Plan Gratuito',time:'hace 6 días'},
+    {icon:'👤',cls:'act-i-blue',main:'Nuevo registro · Laura Vega',sub:'Plan Gratuito → Protector en 1 día',time:'hace 7 días'},
   ];
-
-  if(events.length === 0){
-    document.getElementById('fullActivity').innerHTML = '<div style="color:#aaa;font-size:.85rem;font-weight:600;padding:1rem;">Sin actividad registrada</div>';
-    return;
-  }
-  document.getElementById('fullActivity').innerHTML = events.map(e=>`
+  const html = events.map(e=>`
     <div class="activity-item">
       <div class="act-icon ${e.cls}">${e.icon}</div>
       <div class="act-text"><div class="act-main">${e.main}</div><div class="act-sub">${e.sub}</div></div>
       <div class="act-time">${e.time}</div>
     </div>`).join('');
+  document.getElementById('fullActivity').innerHTML = html;
 }
 
 // ── STATS UPDATE ──
 function updateSummaryStats(){
   document.getElementById('s-total').textContent = users.length;
   document.getElementById('s-gratis').textContent = users.filter(u=>u.plan==='gratis').length;
-  const mrr = users.reduce((acc,u)=> acc + (planMRR[u.plan]||0), 0);
+  const mrr = users.reduce((acc,u)=>{
+    return acc + {gratis:0,basico:79,protector:169,anual:140}[u.plan];
+  },0);
   document.getElementById('s-mrr').textContent = '$'+mrr;
-  const arr = mrr * 12;
   const pend = pagosHist.filter(p=>p.status==='pendiente').length;
   document.getElementById('s-pagos').textContent = pend;
   document.getElementById('pagosBadge').textContent = pend;
-  // Update ARR if element exists
-  const arrEl = document.querySelector('[id="s-arr"]');
-  if(arrEl) arrEl.textContent = '$' + arr.toLocaleString();
-  // Update churn (always 0 for now — no cancelaciones registradas)
-  updateCharts(mrr);
 }
 
 // ── CHARTS ──
+let chartsInit = false;
 function initCharts(){
   if(chartsInit) return;
   chartsInit = true;
-  const mrr = users.reduce((acc,u)=> acc + (planMRR[u.plan]||0), 0);
-  const gratis = users.filter(u=>u.plan==='gratis').length;
-  const basico = users.filter(u=>u.plan==='basico').length;
-  const protector = users.filter(u=>u.plan==='protector' || u.plan==='anual').length;
-
-  mrrChart = new Chart(document.getElementById('chartMRR'),{
+  // MRR Sidebar chart
+  new Chart(document.getElementById('chartMRR'),{
     type:'line',
     data:{
-      labels:['','','','','','Hoy'],
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
       datasets:[{
-        label:'MRR',data:[0,0,0,0,0,mrr],
+        label:'MRR',data:[0,0,79,79,248,417],
         fill:true,
         backgroundColor:'rgba(124,58,237,.1)',
         borderColor:'#7C3AED',borderWidth:3,
@@ -908,44 +843,27 @@ function initCharts(){
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
   });
-
-  planesChart = new Chart(document.getElementById('chartPlanes'),{
+  // Planes donut
+  new Chart(document.getElementById('chartPlanes'),{
     type:'doughnut',
     data:{
       labels:['Gratuito','Básico','Protector'],
-      datasets:[{data:[gratis||0, basico||0, protector||0],backgroundColor:['#FF6B6B','#00D4AA','#7C3AED'],borderWidth:0,hoverOffset:8}]
+      datasets:[{data:[3,1,2],backgroundColor:['#FF6B6B','#00D4AA','#7C3AED'],borderWidth:0,hoverOffset:8}]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'70%'}
   });
 }
 
-function updateCharts(mrr){
-  if(mrrChart){
-    mrrChart.data.datasets[0].data[5] = mrr;
-    mrrChart.update();
-  }
-  if(planesChart){
-    planesChart.data.datasets[0].data = [
-      users.filter(u=>u.plan==='gratis').length,
-      users.filter(u=>u.plan==='basico').length,
-      users.filter(u=>u.plan==='protector'||u.plan==='anual').length
-    ];
-    planesChart.update();
-  }
-}
-
 function initCharts2(){
   if(document.getElementById('chartMRR2').dataset.done) return;
   document.getElementById('chartMRR2').dataset.done='1';
-  const mrr = users.reduce((acc,u)=> acc + (planMRR[u.plan]||0), 0);
-
   new Chart(document.getElementById('chartMRR2'),{
     type:'bar',
     data:{
-      labels:['','','','','','Hoy'],
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
       datasets:[
-        {label:'Básico',data:[0,0,0,0,0,users.filter(u=>u.plan==='basico').length*79],backgroundColor:'rgba(0,212,170,.7)',borderRadius:6},
-        {label:'Protector',data:[0,0,0,0,0,users.filter(u=>u.plan==='protector'||u.plan==='anual').length*169],backgroundColor:'rgba(124,58,237,.7)',borderRadius:6}
+        {label:'Básico',data:[0,0,79,79,79,79],backgroundColor:'rgba(0,212,170,.7)',borderRadius:6},
+        {label:'Protector',data:[0,0,0,0,169,338],backgroundColor:'rgba(124,58,237,.7)',borderRadius:6}
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
@@ -953,19 +871,19 @@ function initCharts2(){
   new Chart(document.getElementById('chartUsers'),{
     type:'bar',
     data:{
-      labels:['','','','','','Hoy'],
-      datasets:[{label:'Usuarios',data:[0,0,0,0,0,users.length],backgroundColor:'rgba(255,107,107,.7)',borderRadius:6}]
+      labels:['Ene','Feb','Mar','Abr','May','Jun'],
+      datasets:[{label:'Nuevos usuarios',data:[0,0,1,1,2,2],backgroundColor:'rgba(255,107,107,.7)',borderRadius:6}]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
   });
   new Chart(document.getElementById('chartProyeccion'),{
     type:'line',
     data:{
-      labels:['Hoy','Mes 2','Mes 3','Mes 4','Mes 5','Mes 6','Mes 7'],
+      labels:['Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
       datasets:[
-        {label:'Conservador',data:[mrr,mrr*1.4,mrr*2,mrr*2.8,mrr*3.8,mrr*4.8,mrr*6],borderColor:'#00D4AA',borderWidth:2,tension:.4,fill:false,pointRadius:4},
-        {label:'Moderado',   data:[mrr,mrr*2,mrr*3.5,mrr*6,mrr*9.5,mrr*14,mrr*21],borderColor:'#7C3AED',borderWidth:2,tension:.4,fill:false,pointRadius:4,borderDash:[5,5]},
-        {label:'Real',       data:[mrr,null,null,null,null,null,null],borderColor:'#FF6B6B',borderWidth:3,tension:.4,fill:false,pointRadius:6}
+        {label:'Conservador',data:[417,600,900,1200,1600,2000,2500],borderColor:'#00D4AA',borderWidth:2,tension:.4,fill:false,pointRadius:4},
+        {label:'Moderado',   data:[417,800,1500,2500,4000,6000,9000],borderColor:'#7C3AED',borderWidth:2,tension:.4,fill:false,pointRadius:4,borderDash:[5,5]},
+        {label:'Real',       data:[417,null,null,null,null,null,null],borderColor:'#FF6B6B',borderWidth:3,tension:.4,fill:false,pointRadius:6}
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
@@ -973,16 +891,16 @@ function initCharts2(){
 }
 
 // ── TOAST ──
-window.showToast = function(type, msg){
+function showToast(type, msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast toast-'+type+' show';
   setTimeout(()=>t.classList.remove('show'),3200);
-};
-function showToast(type, msg){ window.showToast(type, msg); }
+}
 
+// Close modal on overlay click
 document.getElementById('userModal').addEventListener('click', e => {
-  if(e.target === document.getElementById('userModal')) window.closeModal();
+  if(e.target === document.getElementById('userModal')) closeModal();
 });
 </script>
 </body>
