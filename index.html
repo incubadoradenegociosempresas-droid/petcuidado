@@ -695,8 +695,8 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
   </div>
 
   <!-- DRAWER "MÁS" MÓVIL -->
-  <div class="mob-drawer-overlay" id="mobDrawerOverlay" onclick="cerrarDrawer()"></div>
-  <div class="mob-drawer" id="mobDrawer">
+  <div class="mob-drawer-overlay" id="mobDrawerOverlay" onclick="cerrarDrawer()" style="display:none;"></div>
+  <div class="mob-drawer" id="mobDrawer" style="display:none;">
     <div class="mob-drawer-handle"></div>
 
     <div class="mob-drawer-section">⭐ Plan Básico</div>
@@ -2662,6 +2662,15 @@ window.paVolver = function() {
 
 function esMobil() { return window.innerWidth <= 680; }
 
+// Ocultar nav móvil si se cambia a desktop
+window.addEventListener('resize', () => {
+  if (!esMobil()) {
+    const nav = document.getElementById('mobBottomNav');
+    if (nav) nav.style.display = 'none';
+    window.cerrarDrawer && cerrarDrawer();
+  }
+});
+
 function mostrarNavMobil(show) {
   const nav = document.getElementById('mobBottomNav');
   if (nav) nav.style.display = show ? 'flex' : 'none';
@@ -2683,13 +2692,27 @@ window.goDashMob = function(panel, btnId) {
 };
 
 window.abrirDrawer = function() {
-  document.getElementById('mobDrawer').classList.add('open');
-  document.getElementById('mobDrawerOverlay').classList.add('open');
+  const drawer = document.getElementById('mobDrawer');
+  const overlay = document.getElementById('mobDrawerOverlay');
+  drawer.style.display = 'block';
+  overlay.style.display = 'block';
+  // Pequeño delay para que la transición funcione
+  setTimeout(() => {
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+  }, 10);
 };
 
 window.cerrarDrawer = function() {
-  document.getElementById('mobDrawer').classList.remove('open');
-  document.getElementById('mobDrawerOverlay').classList.remove('open');
+  const drawer = document.getElementById('mobDrawer');
+  const overlay = document.getElementById('mobDrawerOverlay');
+  drawer.classList.remove('open');
+  overlay.classList.remove('open');
+  // Ocultar después de la transición
+  setTimeout(() => {
+    if (!drawer.classList.contains('open')) drawer.style.display = 'none';
+    if (!overlay.classList.contains('open')) overlay.style.display = 'none';
+  }, 300);
 };
 
 // Actualizar estado bloqueado en drawer según plan
