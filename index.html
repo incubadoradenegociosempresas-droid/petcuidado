@@ -295,6 +295,43 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
 .score-skeleton{display:flex;flex-direction:column;gap:7px;padding:16px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);}
 .skel-line{height:11px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;}
 @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ═══════════════════════════════════════
+   CARTILLA QR
+═══════════════════════════════════════ */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.qr-mascota-card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 3px 14px rgba(0,0,0,.06);border:1px solid #f0f0f0;}
+.qr-mascota-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.qr-mascota-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#e0f2fe,#bae6fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
+.qr-mascota-nombre{font-weight:900;font-size:1rem;color:#1a1a2e;}
+.qr-mascota-sub{font-size:.76rem;color:#999;margin-top:2px;}
+.qr-code-wrap{display:flex;justify-content:center;margin:16px 0;padding:12px;background:#fafafa;border-radius:12px;border:2px dashed #e8e8e8;}
+.qr-code-wrap canvas{border-radius:8px;}
+.qr-url{font-size:.72rem;color:#aaa;text-align:center;word-break:break-all;margin-bottom:12px;font-weight:600;}
+.qr-actions{display:flex;gap:8px;}
+.qr-btn-dl{flex:1;background:var(--morado);color:#fff;border:none;border-radius:10px;padding:.55rem;font-weight:800;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.qr-btn-dl:hover{transform:translateY(-1px);}
+.qr-btn-ver{flex:1;background:#f5f5f5;color:#555;border:none;border-radius:10px;padding:.55rem;font-weight:800;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.qr-btn-ver:hover{background:#eee;}
+
+/* Página pública de cartilla */
+#page-cartilla{background:linear-gradient(135deg,#F8F4FF,#F4FFFB);}
+.cartilla-wrap{max-width:480px;margin:0 auto;padding:2rem 1.5rem;}
+.cartilla-card{background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(124,58,237,.13);overflow:hidden;}
+.cartilla-header{background:linear-gradient(135deg,var(--morado),#9B59B6);padding:2rem;text-align:center;color:#fff;}
+.cartilla-avatar{font-size:4rem;margin-bottom:.5rem;}
+.cartilla-nombre{font-family:'Righteous',cursive;font-size:2rem;}
+.cartilla-especie{font-size:.9rem;opacity:.8;font-weight:700;margin-top:.2rem;}
+.cartilla-body{padding:1.8rem;}
+.cartilla-row{display:flex;justify-content:space-between;align-items:center;padding:.7rem 0;border-bottom:1px solid #f5f5f5;}
+.cartilla-row:last-child{border-bottom:none;}
+.cartilla-label{font-size:.82rem;color:#aaa;font-weight:700;}
+.cartilla-val{font-size:.88rem;font-weight:800;color:#1a1a2e;}
+.cartilla-footer{background:#f8fafc;padding:1.2rem;text-align:center;border-top:1px solid #f0f0f0;}
+.cartilla-contacto{display:inline-flex;align-items:center;gap:.6rem;background:#25D366;color:#fff;padding:.7rem 1.5rem;border-radius:50px;font-weight:800;font-size:.9rem;text-decoration:none;margin-bottom:.8rem;}
+.cartilla-logo{font-family:'Righteous',cursive;font-size:.9rem;color:#aaa;margin-top:.4rem;}
+.cartilla-logo span{color:var(--coral);}
+.cartilla-not-found{text-align:center;padding:3rem;color:#aaa;}
 </style>
 </head>
 <body>
@@ -477,6 +514,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
       <div class="dash-nav-item" onclick="goDash('alimentacion',this)"><span class="ni">🥗</span>Alimentación IA</div>
       <div class="dash-nav-item" onclick="goDash('sintomas',this)"><span class="ni">🔍</span>Síntomas IA</div>
       <div class="dash-nav-item" onclick="goDash('score',this)"><span class="ni">🏥</span>Score de Salud</div>
+      <div class="dash-nav-item" onclick="goDash('cartilla',this)"><span class="ni">📱</span>Cartilla QR</div>
       <div class="dash-nav-item" onclick="goDash('perfil',this)"><span class="ni">👤</span>Mi perfil</div>
       <div class="dash-sidebar-footer">
         <div class="dash-nav-item" onclick="doLogout()"><span class="ni">🚪</span>Cerrar sesión</div>
@@ -718,6 +756,36 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
           <div id="score-cards-grid" class="score-cards-grid"></div>
         </div>
       </div>
+      <!-- CARTILLA QR -->
+      <div id="dash-cartilla" class="dash-panel">
+        <div class="dash-header">
+          <div>
+            <div class="dash-greeting">📱 Cartilla <span>QR</span></div>
+            <div style="font-size:.85rem;color:#888;font-weight:600;">QR único por mascota para identificación y contacto</div>
+          </div>
+          <span class="plan-chip chip-basico" style="font-size:.72rem;">Plan Básico</span>
+        </div>
+        <div id="qr-bloqueado" style="display:none;" class="dash-card">
+          <div style="text-align:center;padding:2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+            <div style="font-weight:800;font-size:1.1rem;margin-bottom:.5rem;">Función exclusiva Plan Básico</div>
+            <div style="color:#aaa;font-size:.88rem;margin-bottom:1.5rem;">Genera un QR único para cada mascota. Si se extravía, quien lo encuentre puede ver sus datos y contactarte al instante.</div>
+            <button class="add-btn" onclick="goPage('precios')">⭐ Ver planes desde $79/mes</button>
+          </div>
+        </div>
+        <div id="qr-contenido" style="display:none;">
+          <div class="dash-card" style="margin-bottom:1rem;background:linear-gradient(135deg,#f8f4ff,#f0fff4);border:none;">
+            <div style="display:flex;align-items:center;gap:.8rem;">
+              <div style="font-size:2rem;">💡</div>
+              <div>
+                <div style="font-weight:800;font-size:.92rem;color:#1a1a2e;">¿Cómo funciona?</div>
+                <div style="font-size:.78rem;color:#777;font-weight:600;margin-top:.2rem;">Imprime el QR y ponlo en el collar. Si alguien encuentra a tu mascota, escanea el QR y ve sus datos + tu WhatsApp para contactarte.</div>
+              </div>
+            </div>
+          </div>
+          <div id="qr-grid" class="qr-grid"></div>
+        </div>
+      </div>
       <!-- PERFIL -->
       <div id="dash-perfil" class="dash-panel">
         <div class="dash-header"><div class="dash-greeting">👤 Mi <span>perfil</span></div></div>
@@ -779,6 +847,24 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
     <div class="foot-copy">© 2026 PetCuidado · Hecho con ❤️ en México</div>
   </footer>
 </div>
+
+<!-- CARTILLA PÚBLICA -->
+<div id="page-cartilla" class="page">
+  <div class="cartilla-wrap">
+    <div style="text-align:center;margin-bottom:1.2rem;">
+      <a class="nav-logo" onclick="goPage('home')" style="justify-content:center;font-size:1.3rem;">🐾 Pet<span>Cuidado</span></a>
+    </div>
+    <div id="cartilla-contenido">
+      <div class="cartilla-not-found">
+        <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
+        <div style="font-weight:700;">Cargando cartilla...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1155,6 +1241,7 @@ window.goDash = function(panel, el) {
   if (panel === 'alimentacion') initAlimentacion();
   if (panel === 'sintomas') initSintomas();
   if (panel === 'score') initScore();
+  if (panel === 'cartilla') initCartilla();
 };
 
 window.toggleMenu = function() { document.getElementById('mobMenu').classList.toggle('open'); };
@@ -1749,6 +1836,162 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       window.enviarVetIA();
     }
+  }
+});
+
+// ════════════════════════════════════════════
+// CARTILLA QR
+// ════════════════════════════════════════════
+
+async function initCartilla() {
+  if (!currentUser) return;
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  const profile = snap.data() || {};
+  const plan = profile.plan || 'gratis';
+
+  if (plan === 'gratis') {
+    document.getElementById('qr-bloqueado').style.display = 'block';
+    document.getElementById('qr-contenido').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('qr-bloqueado').style.display = 'none';
+  document.getElementById('qr-contenido').style.display = 'block';
+
+  const grid = document.getElementById('qr-grid');
+
+  if (!userMascotas.length) {
+    grid.innerHTML = '<p style="color:#aaa;font-size:.88rem;font-weight:600;padding:1rem;">Sin mascotas registradas. <a onclick="goDash(\'mascotas\',null)" style="color:var(--morado);cursor:pointer;font-weight:800;">+ Agregar</a></p>';
+    return;
+  }
+
+  grid.innerHTML = '';
+
+  userMascotas.forEach(m => {
+    const baseUrl = 'https://incubadoradenegociosempresas-droid.github.io/petcuidado';
+    const cartillaUrl = `${baseUrl}/?cartilla=${m.id}`;
+    const emoji = {perro:'🐶',gato:'🐱',ave:'🐦',conejo:'🐰'}[m.especie] || '🐾';
+
+    const card = document.createElement('div');
+    card.className = 'qr-mascota-card';
+    card.innerHTML = `
+      <div class="qr-mascota-header">
+        <div class="qr-mascota-avatar">${emoji}</div>
+        <div>
+          <div class="qr-mascota-nombre">${m.nombre}</div>
+          <div class="qr-mascota-sub">${m.especie||''}${m.raza ? ' · '+m.raza : ''}</div>
+        </div>
+      </div>
+      <div class="qr-code-wrap" id="qr-canvas-${m.id}"></div>
+      <div class="qr-url">${cartillaUrl}</div>
+      <div class="qr-actions">
+        <button class="qr-btn-dl" onclick="descargarQR('${m.id}','${m.nombre}')">⬇️ Descargar QR</button>
+        <button class="qr-btn-ver" onclick="verCartillaPublica('${m.id}')">👁 Ver cartilla</button>
+      </div>`;
+    grid.appendChild(card);
+
+    setTimeout(() => {
+      const qrEl = document.getElementById(`qr-canvas-${m.id}`);
+      if (qrEl && typeof QRCode !== 'undefined') {
+        new QRCode(qrEl, {
+          text: cartillaUrl,
+          width: 180,
+          height: 180,
+          colorDark: '#1A1A2E',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    }, 200);
+  });
+}
+
+window.descargarQR = function(mascotaId, nombre) {
+  const wrap = document.getElementById(`qr-canvas-${mascotaId}`);
+  if (!wrap) return;
+  const img = wrap.querySelector('img') || wrap.querySelector('canvas');
+  if (!img) { toast('err', 'QR no listo, espera un momento'); return; }
+  const link = document.createElement('a');
+  if (img.tagName === 'CANVAS') {
+    link.href = img.toDataURL('image/png');
+  } else {
+    link.href = img.src;
+  }
+  link.download = `cartilla-qr-${nombre.toLowerCase().replace(/\s/g,'-')}.png`;
+  link.click();
+  toast('ok', `📥 QR de ${nombre} descargado`);
+};
+
+window.verCartillaPublica = async function(mascotaId) {
+  await mostrarCartillaPublica(mascotaId);
+  goPage('cartilla');
+};
+
+async function mostrarCartillaPublica(mascotaId) {
+  const contenido = document.getElementById('cartilla-contenido');
+  contenido.innerHTML = `<div class="cartilla-not-found"><div style="font-size:2rem;margin-bottom:.5rem;">⏳</div><div style="font-weight:700;">Cargando...</div></div>`;
+
+  try {
+    const mascSnap = await getDoc(doc(db, 'mascotas', mascotaId));
+    if (!mascSnap.exists()) {
+      contenido.innerHTML = `<div class="cartilla-not-found"><div style="font-size:3rem;margin-bottom:1rem;">😢</div><div style="font-weight:800;font-size:1.1rem;">Cartilla no encontrada</div><p style="font-size:.85rem;margin-top:.5rem;">El QR puede haber expirado o la mascota fue dada de baja.</p></div>`;
+      return;
+    }
+
+    const m = mascSnap.data();
+    const emoji = {perro:'🐶',gato:'🐱',ave:'🐦',conejo:'🐰'}[m.especie] || '🐾';
+
+    const userSnap = await getDoc(doc(db, 'users', m.userId));
+    const owner = userSnap.exists() ? userSnap.data() : {};
+    const whatsapp = owner.whatsapp || '524772732496';
+    const ownerNombre = owner.nombre || 'Dueño';
+
+    const filas = [
+      { label: '🐾 Especie', val: m.especie ? m.especie.charAt(0).toUpperCase()+m.especie.slice(1) : '—' },
+      { label: '🏷️ Raza', val: m.raza || '—' },
+      { label: '🎂 Edad', val: m.edad ? m.edad + ' años' : '—' },
+      { label: '⚖️ Peso', val: m.peso ? m.peso + ' kg' : '—' },
+      { label: '⚧️ Sexo', val: m.sexo ? m.sexo.charAt(0).toUpperCase()+m.sexo.slice(1) : '—' },
+      { label: '👤 Dueño', val: ownerNombre },
+    ].map(f => `<div class="cartilla-row"><span class="cartilla-label">${f.label}</span><span class="cartilla-val">${f.val}</span></div>`).join('');
+
+    const waMsg = encodeURIComponent(`Hola, encontré a tu mascota ${m.nombre} 🐾 Escanee el QR de su cartilla de PetCuidado.`);
+
+    contenido.innerHTML = `
+      <div class="cartilla-card">
+        <div class="cartilla-header">
+          <div class="cartilla-avatar">${emoji}</div>
+          <div class="cartilla-nombre">${m.nombre}</div>
+          <div class="cartilla-especie">${m.especie||''} ${m.raza ? '· '+m.raza : ''}</div>
+        </div>
+        <div class="cartilla-body">${filas}</div>
+        <div class="cartilla-footer">
+          <div style="font-weight:800;font-size:.85rem;color:#555;margin-bottom:.8rem;">¿Encontraste a ${m.nombre}?</div>
+          <a class="cartilla-contacto" href="https://wa.me/${whatsapp}?text=${waMsg}" target="_blank">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Contactar al dueño
+          </a>
+          <div class="cartilla-logo">🐾 Pet<span>Cuidado</span></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:1rem;">
+        <button onclick="goPage('home')" style="background:none;border:none;color:var(--morado);font-weight:800;font-size:.85rem;cursor:pointer;">← Ir a PetCuidado</button>
+      </div>`;
+  } catch(e) {
+    console.error(e);
+    contenido.innerHTML = `<div class="cartilla-not-found"><div style="font-size:3rem;margin-bottom:1rem;">⚠️</div><div style="font-weight:700;">Error al cargar la cartilla</div></div>`;
+  }
+}
+
+// Detectar ?cartilla=ID en la URL al cargar
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const cartillaId = params.get('cartilla');
+  if (cartillaId) {
+    setTimeout(async () => {
+      await mostrarCartillaPublica(cartillaId);
+      goPage('cartilla');
+    }, 1800);
   }
 });
 </script>
