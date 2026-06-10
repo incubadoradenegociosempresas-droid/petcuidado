@@ -128,6 +128,7 @@ table.tbl{width:100%;border-collapse:collapse;}
 /* BADGES */
 .badge{padding:.22rem .75rem;border-radius:20px;font-size:.72rem;font-weight:800;white-space:nowrap;display:inline-block;}
 .b-g{background:rgba(255,107,107,.1);color:var(--coral);}
+.b-beta{background:rgba(255,159,67,.15);color:#e67e00;}
 .b-b{background:rgba(0,212,170,.1);color:#00A882;}
 .b-p{background:rgba(124,58,237,.1);color:var(--morado);}
 .b-a{background:rgba(255,159,67,.15);color:var(--naranja);}
@@ -395,6 +396,10 @@ table.tbl{width:100%;border-collapse:collapse;}
             <option value="basico">Básico</option>
             <option value="protector">Protector</option>
             <option value="anual">Anual</option>
+            <option value="beta">🧪 Beta (todos)</option>
+            <option value="beta_gratis">Beta Gratuito</option>
+            <option value="beta_basico">Beta Básico</option>
+            <option value="beta_protector">Beta Protector</option>
           </select>
           <select class="filter-sel" onchange="filterByStatus(this.value)">
             <option value="">Todos los estados</option>
@@ -538,6 +543,10 @@ table.tbl{width:100%;border-collapse:collapse;}
         <button class="btn btn-sm" style="background:rgba(0,212,170,.1);color:#00A882;" onclick="cambiarPlanModal('basico')">⭐ Básico</button>
         <button class="btn btn-primary btn-sm" onclick="cambiarPlanModal('protector')">👑 Protector</button>
         <button class="btn btn-sm" style="background:rgba(255,159,67,.15);color:var(--naranja);" onclick="cambiarPlanModal('anual')">🏆 Anual</button>
+        <div style="width:100%;height:1px;background:#f0f0f0;margin:.4rem 0;"></div>
+        <button class="btn btn-sm" style="background:rgba(255,159,67,.15);color:#e67e00;" onclick="cambiarPlanModal('beta_gratis')">🧪 Beta Gratis</button>
+        <button class="btn btn-sm" style="background:rgba(255,159,67,.15);color:#e67e00;" onclick="cambiarPlanModal('beta_basico')">🧪 Beta Básico</button>
+        <button class="btn btn-sm" style="background:rgba(255,159,67,.15);color:#e67e00;" onclick="cambiarPlanModal('beta_protector')">🧪 Beta Protector</button>
       </div>
     </div>
     <div style="margin-bottom:1rem;">
@@ -583,9 +592,9 @@ const db   = getFirestore(app);
 
 // ── CONFIG ──
 const ADMIN_EMAIL = 'admin@petcuidado.com';
-const planNames = { gratis:'Gratuito', basico:'Básico', protector:'Protector', anual:'Anual' };
-const planBadge  = { gratis:'b-g', basico:'b-b', protector:'b-p', anual:'b-a' };
-const planMRR    = { gratis:0, basico:79, protector:169, anual:140 };
+const planNames = { gratis:'Gratuito', basico:'Básico', protector:'Protector', anual:'Anual', beta_gratis:'Beta Gratuito', beta_basico:'Beta Básico', beta_protector:'Beta Protector' };
+const planBadge  = { gratis:'b-g', basico:'b-b', protector:'b-p', anual:'b-a', beta_gratis:'b-beta', beta_basico:'b-beta', beta_protector:'b-beta' };
+const planMRR    = { gratis:0, basico:79, protector:169, anual:140, beta_gratis:0, beta_basico:0, beta_protector:0 };
 
 let users = [];
 let pagosHist = [];
@@ -685,7 +694,7 @@ function renderUsers(){
   const tbody = document.getElementById('usersTbody');
   const filtered = users.filter(u => {
     const matchText = !_textF || u.nombre.toLowerCase().includes(_textF) || u.email.toLowerCase().includes(_textF);
-    const matchPlan = !_planF || u.plan === _planF;
+    const matchPlan = !_planF || u.plan === _planF || (_planF === 'beta' && u.plan && u.plan.startsWith('beta'));
     const matchStatus = !_statusF || u.status === _statusF;
     return matchText && matchPlan && matchStatus;
   });
@@ -702,7 +711,7 @@ function renderUsers(){
       <td><span class="badge ${planBadge[u.plan]||'b-g'}">${planNames[u.plan]||u.plan}</span></td>
       <td>
         <select class="plan-sel" onchange="cambiarPlan('${u.id}',this.value)">
-          ${['gratis','basico','protector','anual'].map(p=>`<option value="${p}" ${u.plan===p?'selected':''}>${planNames[p]}</option>`).join('')}
+          ${['gratis','basico','protector','anual','beta_gratis','beta_basico','beta_protector'].map(p=>`<option value="${p}" ${u.plan===p?'selected':''}>${planNames[p]}</option>`).join('')}
         </select>
       </td>
       <td>
@@ -933,9 +942,10 @@ function updateSummaryStats(){
   const pend = pagosHist.filter(p=>p.status==='pendiente').length;
   const conf = pagosHist.filter(p=>p.status==='confirmado').length;
   const total = pagosHist.length;
-  const nGratis    = users.filter(u=>u.plan==='gratis').length;
-  const nBasico    = users.filter(u=>u.plan==='basico').length;
-  const nProtector = users.filter(u=>u.plan==='protector'||u.plan==='anual').length;
+  const nGratis    = users.filter(u=>u.plan==='gratis'||u.plan==='beta_gratis').length;
+  const nBasico    = users.filter(u=>u.plan==='basico'||u.plan==='beta_basico').length;
+  const nProtector = users.filter(u=>u.plan==='protector'||u.plan==='anual'||u.plan==='beta_protector').length;
+  const nBeta      = users.filter(u=>u.plan&&u.plan.startsWith('beta')).length;
   const mrrBasico    = nBasico * 79;
   const mrrProtector = nProtector * 169;
   const pctObjetivo  = Math.min(100, Math.round((mrr/1000)*100));
