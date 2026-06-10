@@ -332,6 +332,45 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
 .cartilla-logo{font-family:'Righteous',cursive;font-size:.9rem;color:#aaa;margin-top:.4rem;}
 .cartilla-logo span{color:var(--coral);}
 .cartilla-not-found{text-align:center;padding:3rem;color:#aaa;}
+
+/* ═══════════════════════════════════════
+   PRIMEROS AUXILIOS
+═══════════════════════════════════════ */
+.pa-especie-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.4rem;}
+.pa-tab{padding:.5rem 1.1rem;border-radius:50px;border:2px solid #e8e8e8;background:#fff;font-weight:800;font-size:.83rem;cursor:pointer;transition:all .2s;color:#555;}
+.pa-tab:hover{border-color:var(--morado);color:var(--morado);}
+.pa-tab.active{background:var(--morado);border-color:var(--morado);color:#fff;}
+.pa-emergencias-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:1.4rem;}
+.pa-emerg-btn{background:#fff;border:2px solid #f0f0f0;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:.8rem;}
+.pa-emerg-btn:hover{border-color:var(--morado);transform:translateY(-2px);box-shadow:0 4px 14px rgba(124,58,237,.12);}
+.pa-emerg-btn.urgente{border-left:4px solid var(--coral);}
+.pa-emerg-btn.moderado{border-left:4px solid var(--amarillo);}
+.pa-emerg-btn.leve{border-left:4px solid var(--turquesa);}
+.pa-emerg-icon{font-size:1.8rem;flex-shrink:0;}
+.pa-emerg-nombre{font-weight:800;font-size:.88rem;color:#1a1a2e;}
+.pa-emerg-nivel{font-size:.7rem;font-weight:800;margin-top:.2rem;}
+.nivel-urgente{color:var(--coral);}
+.nivel-moderado{color:#ca8a04;}
+.nivel-leve{color:#00A882;}
+.pa-detalle{display:none;}
+.pa-detalle.show{display:block;}
+.pa-detalle-header{display:flex;align-items:center;gap:1rem;padding:1.2rem;border-radius:16px;margin-bottom:1rem;}
+.pa-detalle-header.urgente{background:rgba(255,107,107,.08);border:2px solid rgba(255,107,107,.2);}
+.pa-detalle-header.moderado{background:rgba(255,217,61,.08);border:2px solid rgba(255,217,61,.3);}
+.pa-detalle-header.leve{background:rgba(0,212,170,.08);border:2px solid rgba(0,212,170,.2);}
+.pa-detalle-icon{font-size:2.8rem;}
+.pa-detalle-titulo{font-family:'Righteous',cursive;font-size:1.3rem;color:#1a1a2e;}
+.pa-detalle-nivel{font-size:.78rem;font-weight:800;margin-top:.2rem;}
+.pa-pasos{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1rem;}
+.pa-paso{display:flex;gap:.9rem;align-items:flex-start;background:#fff;border-radius:12px;padding:1rem;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.pa-paso-num{width:28px;height:28px;border-radius:50%;background:var(--morado);color:#fff;font-weight:900;font-size:.82rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;}
+.pa-paso-texto{font-size:.86rem;font-weight:600;color:#333;line-height:1.55;}
+.pa-paso-texto strong{color:#1a1a2e;font-weight:900;}
+.pa-alerta-vet{background:rgba(255,107,107,.08);border:2px solid rgba(255,107,107,.25);border-radius:12px;padding:1rem 1.1rem;display:flex;align-items:flex-start;gap:.7rem;margin-bottom:1rem;}
+.pa-alerta-vet-icon{font-size:1.3rem;flex-shrink:0;}
+.pa-alerta-vet-texto{font-size:.82rem;font-weight:700;color:#c0392b;line-height:1.5;}
+.pa-volver{background:#f5f5f5;color:#555;border:none;border-radius:10px;padding:.55rem 1.2rem;font-weight:800;font-size:.82rem;cursor:pointer;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;}
+.pa-volver:hover{background:#ebebeb;}
 </style>
 </head>
 <body>
@@ -515,6 +554,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
       <div class="dash-nav-item" onclick="goDash('sintomas',this)"><span class="ni">🔍</span>Síntomas IA</div>
       <div class="dash-nav-item" onclick="goDash('score',this)"><span class="ni">🏥</span>Score de Salud</div>
       <div class="dash-nav-item" onclick="goDash('cartilla',this)"><span class="ni">📱</span>Cartilla QR</div>
+      <div class="dash-nav-item" onclick="goDash('auxilios',this)"><span class="ni">🆘</span>Primeros Auxilios</div>
       <div class="dash-nav-item" onclick="goDash('perfil',this)"><span class="ni">👤</span>Mi perfil</div>
       <div class="dash-sidebar-footer">
         <div class="dash-nav-item" onclick="doLogout()"><span class="ni">🚪</span>Cerrar sesión</div>
@@ -786,6 +826,53 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
           <div id="qr-grid" class="qr-grid"></div>
         </div>
       </div>
+      <!-- PRIMEROS AUXILIOS -->
+      <div id="dash-auxilios" class="dash-panel">
+        <div class="dash-header">
+          <div>
+            <div class="dash-greeting">🆘 Primeros <span>Auxilios</span></div>
+            <div style="font-size:.85rem;color:#888;font-weight:600;">Guía de emergencias paso a paso · Funciona sin internet</div>
+          </div>
+          <span class="plan-chip chip-basico" style="font-size:.72rem;">Plan Básico</span>
+        </div>
+
+        <div id="pa-bloqueado" style="display:none;" class="dash-card">
+          <div style="text-align:center;padding:2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+            <div style="font-weight:800;font-size:1.1rem;margin-bottom:.5rem;">Función exclusiva Plan Básico</div>
+            <div style="color:#aaa;font-size:.88rem;margin-bottom:1.5rem;">Accede a la guía completa de primeros auxilios para perros, gatos, aves y conejos. Paso a paso, sin internet.</div>
+            <button class="add-btn" onclick="goPage('precios')">⭐ Ver planes desde $79/mes</button>
+          </div>
+        </div>
+
+        <div id="pa-contenido" style="display:none;">
+          <!-- Tabs de especie -->
+          <div class="pa-especie-tabs" id="pa-tabs">
+            <button class="pa-tab active" onclick="paSetEspecie('perro',this)">🐶 Perro</button>
+            <button class="pa-tab" onclick="paSetEspecie('gato',this)">🐱 Gato</button>
+            <button class="pa-tab" onclick="paSetEspecie('ave',this)">🐦 Ave</button>
+            <button class="pa-tab" onclick="paSetEspecie('conejo',this)">🐰 Conejo</button>
+          </div>
+
+          <!-- Lista de emergencias -->
+          <div id="pa-lista" class="dash-card">
+            <div class="dash-card-title" id="pa-lista-titulo">🐶 Emergencias en Perros</div>
+            <div class="pa-emergencias-grid" id="pa-emergencias-grid"></div>
+          </div>
+
+          <!-- Detalle de emergencia -->
+          <div id="pa-detalle-wrap" class="pa-detalle">
+            <button class="pa-volver" onclick="paVolver()">← Volver a emergencias</button>
+            <div class="dash-card">
+              <div id="pa-detalle-header" class="pa-detalle-header"></div>
+              <div id="pa-pasos-lista" class="pa-pasos"></div>
+              <div id="pa-alerta-vet-wrap"></div>
+              <div style="font-size:.74rem;color:#aaa;font-weight:600;margin-top:.5rem;">⚠️ Esta guía es orientativa. Siempre consulta a un veterinario ante cualquier emergencia.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- PERFIL -->
       <div id="dash-perfil" class="dash-panel">
         <div class="dash-header"><div class="dash-greeting">👤 Mi <span>perfil</span></div></div>
@@ -1242,6 +1329,7 @@ window.goDash = function(panel, el) {
   if (panel === 'sintomas') initSintomas();
   if (panel === 'score') initScore();
   if (panel === 'cartilla') initCartilla();
+  if (panel === 'auxilios') initAuxilios();
 };
 
 window.toggleMenu = function() { document.getElementById('mobMenu').classList.toggle('open'); };
@@ -1982,6 +2070,316 @@ async function mostrarCartillaPublica(mascotaId) {
     contenido.innerHTML = `<div class="cartilla-not-found"><div style="font-size:3rem;margin-bottom:1rem;">⚠️</div><div style="font-weight:700;">Error al cargar la cartilla</div></div>`;
   }
 }
+
+// ════════════════════════════════════════════
+// PRIMEROS AUXILIOS
+// ════════════════════════════════════════════
+
+const PA_DATA = {
+  perro: [
+    {
+      id:'atragantamiento', nombre:'Atragantamiento', icon:'😮‍💨', nivel:'urgente',
+      pasos:[
+        {t:'Mantén la calma', d:'Acerca tu cara al hocico de tu perro para sentir si hay paso de aire. No intentes meter los dedos si no ves claramente el objeto.'},
+        {t:'Abre la boca', d:'Sujeta la cabeza del perro con ambas manos. Abre la boca con cuidado jalando la mandíbula hacia abajo. Busca el objeto con una linterna si es posible.'},
+        {t:'Si ves el objeto', d:'Usa dos dedos en pinza para intentar sacar el objeto. Solo si está visible y accesible. Nunca empujes hacia adentro.'},
+        {t:'Maniobra de Heimlich', d:'Colócate detrás del perro. Rodea su abdomen con los brazos justo debajo de las costillas. Da 3-5 compresiones rápidas hacia arriba y adentro.'},
+        {t:'Repite y revisa', d:'Revisa la boca después de cada compresión. Repite hasta 3 veces. Si no respira, inicia RCP básica.'},
+      ],
+      vet:'Ve al veterinario de INMEDIATO aunque logres sacar el objeto. Puede haber lesiones internas.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'convulsiones', nombre:'Convulsiones', icon:'⚡', nivel:'urgente',
+      pasos:[
+        {t:'No lo toques', d:'Durante la convulsión NO toques al perro, NO metas nada en su boca. No se puede tragar la lengua. Tu mano puede resultar mordida.'},
+        {t:'Aleja objetos peligrosos', d:'Retira muebles, escaleras u objetos con los que pueda golpearse. Pon una almohada o ropa suave bajo su cabeza si es posible sin tocarlo.'},
+        {t:'Cronometra', d:'Anota la hora exacta en que empezó la convulsión. Si dura más de 2 minutos o se repite, es emergencia crítica.'},
+        {t:'Reduce estímulos', d:'Apaga luces fuertes y reduce ruidos. Las convulsiones pueden empeorar con estímulos intensos.'},
+        {t:'Tras la convulsión', d:'El perro estará confundido y desorientado. Habla con voz suave. No lo fuerces a levantarse. Dale agua solo si está consciente y estable.'},
+      ],
+      vet:'Lleva a tu perro al veterinario SIEMPRE después de una convulsión, aunque parezca recuperado.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'golpe_calor', nombre:'Golpe de calor', icon:'🌡️', nivel:'urgente',
+      pasos:[
+        {t:'Saca del calor', d:'Mueve al perro inmediatamente a un lugar fresco y con sombra. Enciende el aire acondicionado o un ventilador apuntando hacia él.'},
+        {t:'Hidrata con cuidado', d:'Ofrece agua fresca (NO helada) en pequeñas cantidades. No lo obligues a beber. Nunca le des agua con hielo, puede causar shock.'},
+        {t:'Enfría gradualmente', d:'Moja su cuerpo con agua tibia-fría (no helada) especialmente cuello, axilas e ingles. Puedes usar una toalla húmeda. Evita el agua muy fría.'},
+        {t:'Ventila', d:'Abanica al perro mientras está mojado para aumentar la evaporación y bajar la temperatura corporal.'},
+        {t:'Monitorea', d:'Toma la temperatura rectal si tienes termómetro. Normal: 38-39°C. Si supera 41°C es crítico. Sigue enfriando durante el traslado al vet.'},
+      ],
+      vet:'El golpe de calor puede causar daño en órganos irreversible. Ve al veterinario de inmediato.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'intoxicacion', nombre:'Intoxicación', icon:'☠️', nivel:'urgente',
+      pasos:[
+        {t:'Identifica qué ingirió', d:'Busca envases, plantas o sustancias cercanas. Anota el nombre del producto, cantidad aproximada y hora en que ocurrió.'},
+        {t:'NO induzcas vómito', d:'Salvo que el veterinario lo indique, NO induzcas el vómito. Con ciertos tóxicos (ácidos, cáusticos) puede empeorar el daño.'},
+        {t:'Limpia la boca', d:'Si el tóxico estaba en la piel o pelaje, lava con agua abundante. Usa guantes para protegerte.'},
+        {t:'Llama al veterinario', d:'Contacta al veterinario ANTES de actuar. Lleva el envase del producto o una foto. No esperes síntomas para actuar.'},
+        {t:'Señales de alerta', d:'Vómito, salivación excesiva, temblores, pupilas dilatadas, dificultad para respirar o pérdida de consciencia son señales críticas.'},
+      ],
+      vet:'Intoxicación = emergencia. Ve al veterinario con la información del tóxico. El tiempo es crítico.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'herida', nombre:'Herida o corte', icon:'🩹', nivel:'moderado',
+      pasos:[
+        {t:'Controla el sangrado', d:'Presiona sobre la herida con una tela limpia o gasa durante 5-10 minutos sin levantar. Si la tela se empapa, añade otra encima sin retirar la primera.'},
+        {t:'Limpia la herida', d:'Una vez controlado el sangrado, limpia con agua limpia a presión o solución salina. Retira suciedad visible con una pinza limpia.'},
+        {t:'Desinfecta', d:'Aplica agua oxigenada o clorhexidina diluida en la herida. Evita alcohol puro, irrita el tejido y retrasa la cicatrización.'},
+        {t:'Cubre', d:'Cubre con una gasa estéril y fija con venda o cinta médica. Evita que el perro lama la herida, usa el collar isabelino si es necesario.'},
+        {t:'Monitorea', d:'Revisa la herida cada 12 horas. Señales de infección: enrojecimiento que crece, calor, pus, mal olor o fiebre del animal.'},
+      ],
+      vet:'Ve al vet si la herida es profunda, tiene más de 2cm, no para de sangrar o muestra signos de infección.',
+      nivelTexto:'🟡 ATENCIÓN EN 24H'
+    },
+    {
+      id:'fractura', nombre:'Fractura o luxación', icon:'🦴', nivel:'moderado',
+      pasos:[
+        {t:'Inmoviliza al perro', d:'Habla en tono calmado. Evita que se mueva. Un perro con dolor puede morder incluso a su dueño. Usa una manta para envolverlo si es necesario.'},
+        {t:'No endereces el hueso', d:'Nunca intentes acomodar un hueso fracturado. Puedes causar más daño y un dolor severo.'},
+        {t:'Improvisa camilla', d:'Usa una tabla, cartón rígido o bandeja plana. Desliza suavemente al perro sobre ella sin doblar la extremidad afectada.'},
+        {t:'Inmoviliza la zona', d:'Si debes trasladarlo, envuelve ligeramente la zona con vendas o tela sin apretar. El objetivo es reducir el movimiento, no cortar circulación.'},
+        {t:'Traslada con cuidado', d:'Lleva al veterinario lo antes posible. Mantén al perro horizontal y tranquilo durante el trayecto.'},
+      ],
+      vet:'Fractura = siempre requiere atención veterinaria. No esperes a ver si "mejora solo".',
+      nivelTexto:'🟡 ATENCIÓN EN 24H'
+    },
+    {
+      id:'picadura', nombre:'Picadura o mordedura', icon:'🐝', nivel:'leve',
+      pasos:[
+        {t:'Identifica el tipo', d:'Picadura de insecto: busca aguijón y retíralo raspando con una tarjeta (no pellizques, libera más veneno). Mordedura de animal: diferente protocolo.'},
+        {t:'Limpia la zona', d:'Lava con agua y jabón durante 5 minutos. Para picaduras, aplica una pasta de bicarbonato y agua para neutralizar el ácido.'},
+        {t:'Reduce la inflamación', d:'Aplica hielo envuelto en tela por 10 minutos. Nunca hielo directo sobre la piel.'},
+        {t:'Vigila reacciones', d:'Observa durante 30 minutos. Señales de reacción alérgica grave: hinchazón rápida en cara/garganta, dificultad para respirar, pérdida del equilibrio.'},
+        {t:'Mordeduras', d:'Lava con abundante agua y jabón. Aplica antiséptico. Todas las mordeduras de animales desconocidos requieren evaluación veterinaria por riesgo de rabia.'},
+      ],
+      vet:'Ve al vet si hay reacción alérgica, la hinchazón no cede en 2h, o si fue mordedura de animal desconocido.',
+      nivelTexto:'🟢 PUEDE ESPERAR CONSULTA'
+    },
+  ],
+  gato: [
+    {
+      id:'caida_altura', nombre:'Caída de altura', icon:'🪂', nivel:'urgente',
+      pasos:[
+        {t:'No muevas al gato', d:'Aunque parezca bien, una caída puede causar lesiones internas no visibles. Mantén al gato quieto y calmado en el lugar donde cayó.'},
+        {t:'Evalúa consciencia', d:'¿Está consciente? ¿Respira? ¿Mueve las patas? Habla suavemente. Si está inconsciente o no respira, es emergencia crítica.'},
+        {t:'Revisa sangrado', d:'Busca heridas visibles, sangrado por boca o nariz, deformidades en patas. No presiones el abdomen.'},
+        {t:'Traslada con cuidado', d:'Si debes moverlo, usa una caja con tela suave o una tabla plana. Minimiza el movimiento del cuerpo. No lo cargues como siempre.'},
+        {t:'Mantén caliente', d:'Cubre con una manta liviana para prevenir shock. No uses calor directo.'},
+      ],
+      vet:'Toda caída desde más de 2 metros requiere revisión veterinaria urgente, aunque el gato parezca normal.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'obstruccion_urinaria', nombre:'Obstrucción urinaria', icon:'🚨', nivel:'urgente',
+      pasos:[
+        {t:'Identifica los síntomas', d:'El gato va repetidamente a la caja sin orinar o sale solo una gota. Maúlla de dolor, lame constantemente la zona genital, está inquieto o letárgico.'},
+        {t:'No esperes', d:'La obstrucción urinaria en gatos machos puede ser fatal en 24-48 horas. No es algo que "se resuelva solo".'},
+        {t:'Mantén calmado', d:'Reduce el estrés del gato. No lo presiones ni manipules el abdomen. El dolor puede volverlo agresivo.'},
+        {t:'Prepara para traslado', d:'Pon al gato en su transportadora con una tela cómoda. Lleva agua por si el traslado es largo.'},
+        {t:'Ve AHORA', d:'Esta es una emergencia de las pocas que puede matar en horas. No esperes a que "mejore" ni a la mañana siguiente.'},
+      ],
+      vet:'EMERGENCIA CRÍTICA. Ve al veterinario de inmediato, incluso de madrugada. No hay tiempo que perder.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'envenenamiento_gato', nombre:'Intoxicación', icon:'☠️', nivel:'urgente',
+      pasos:[
+        {t:'Tóxicos comunes en gatos', d:'Lilium (lirio), paracetamol, ibuprofeno, anticongelante, plantas de interior (potos, ficus), insecticidas para perros aplicados en gatos.'},
+        {t:'Identifica la fuente', d:'Busca qué pudo haber ingerido o con qué tuvo contacto. Anota el nombre exacto del producto.'},
+        {t:'No induzcas vómito', d:'En gatos especialmente, nunca induzcas vómito sin instrucción veterinaria. Puede causar más daño.'},
+        {t:'Si hay contacto en piel', d:'Lava con agua tibia abundante y jabón suave sin que el gato lama la zona. Usa guantes.'},
+        {t:'Señales de alerta', d:'Salivación excesiva, temblores, convulsiones, dificultad respiratoria, encías pálidas o amarillas. Actúa de inmediato.'},
+      ],
+      vet:'Los gatos son extremadamente sensibles a toxinas. Ve al veterinario sin esperar síntomas graves.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'herida_gato', nombre:'Herida o pelea', icon:'🩹', nivel:'moderado',
+      pasos:[
+        {t:'Cuidado con el estrés', d:'Un gato herido puede arañar o morder por miedo y dolor. Envuélvelo en una toalla grande dejando solo la zona herida accesible.'},
+        {t:'Controla sangrado', d:'Presiona con gasa limpia 5-10 minutos. Las heridas de pelea en gatos suelen ser pequeñas pero profundas — riesgo de absceso.'},
+        {t:'Limpia', d:'Lava con agua limpia o suero fisiológico. Aplica clorhexidina diluida. No uses alcohol ni agua oxigenada concentrada.'},
+        {t:'Busca heridas ocultas', d:'Las mordeduras de gatos dejan marcas pequeñas que se infectan fácilmente. Revisa todo el cuerpo, especialmente cuello y base de cola.'},
+        {t:'Vigila 48 horas', d:'Las heridas de pelea casi siempre necesitan antibióticos. Señales de absceso: bulto caliente, dolor al tacto, fiebre, el gato no come.'},
+      ],
+      vet:'Toda mordedura de otro gato requiere atención veterinaria para antibióticos preventivos.',
+      nivelTexto:'🟡 ATENCIÓN EN 24H'
+    },
+    {
+      id:'dificultad_respirar', nombre:'Dificultad respiratoria', icon:'💨', nivel:'urgente',
+      pasos:[
+        {t:'Identifica los síntomas', d:'Respiración con la boca abierta (muy anormal en gatos), jadeo, respiración ruidosa, cuello extendido, encías azules o grises.'},
+        {t:'Mantén calma total', d:'El estrés empeora la dificultad respiratoria. Habla muy suave, movimientos lentos. No lo abraces ni aprietes.'},
+        {t:'Posición cómoda', d:'Permite que el gato se ponga en la posición que prefiera (normalmente esternón con cuello extendido). No lo pongas de lado.'},
+        {t:'Ventilación', d:'Abre una ventana si el ambiente es muy caluroso. Si tienes oxígeno suplementario por prescripción veterinaria previa, úsalo.'},
+        {t:'Traslado urgente', d:'Coloca al gato en su transportadora con ventilación. No lo pongas en una bolsa cerrada. Ve al veterinario ahora.'},
+      ],
+      vet:'Dificultad respiratoria en gatos = emergencia inmediata. Las encías azules indican falta grave de oxígeno.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+  ],
+  ave: [
+    {
+      id:'trauma_ave', nombre:'Trauma o golpe', icon:'💥', nivel:'urgente',
+      pasos:[
+        {t:'No lo manipules de más', d:'Las aves entran en shock fácilmente. Limita el contacto. Usa una toalla suave para sostenerla si es necesario, cubriendo también los ojos para reducir el estrés.'},
+        {t:'Caja de recuperación', d:'Coloca al ave en una caja pequeña, oscura y con ventilación. Pon papel absorbente en el fondo. La oscuridad reduce el estrés.'},
+        {t:'Temperatura', d:'Las aves en shock necesitan calor. Pon una bolsa de agua tibia (no caliente) envuelta en tela bajo la mitad de la caja. El ave debe poder alejarse del calor.'},
+        {t:'No le des agua forzada', d:'No intentes darle agua con cuentagotas. El ave puede aspirarla. Si está consciente y activa, pon agua disponible.'},
+        {t:'Silencio y oscuridad', d:'Cubre la caja y colócala en un lugar tranquilo lejos de mascotas y ruidos. Revisa cada 30 minutos sin hacer ruido.'},
+      ],
+      vet:'Todo trauma en aves requiere veterinario aviar. Las aves ocultan su malestar — si parece bien, igual ve.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'intoxicacion_ave', nombre:'Intoxicación', icon:'☠️', nivel:'urgente',
+      pasos:[
+        {t:'Tóxicos comunes', d:'Teflón recalentado (sartenes), humo de cigarro, velas aromáticas, sprays, aguacate, chocolate, cafeína, semillas de manzana, cebolla.'},
+        {t:'Retira la fuente', d:'Saca al ave de la habitación contaminada inmediatamente. Ventila el área abriendo ventanas.'},
+        {t:'Aire fresco', d:'Lleva al ave a un ambiente con aire limpio. Si hubo inhalación de humo de teflón, el daño puede ser irreversible en minutos.'},
+        {t:'No induzcas vómito', d:'Las aves no tienen reflejo de vómito como los mamíferos. No intentes provocarlo.'},
+        {t:'Caja de traslado', d:'Prepara para traslado urgente. Mantén al ave caliente y en oscuridad parcial durante el camino.'},
+      ],
+      vet:'Las aves son extremadamente sensibles a toxinas aéreas. La exposición a teflón quemado es frecuentemente fatal. Ve ya.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'plumas_ave', nombre:'Pérdida de plumas', icon:'🪶', nivel:'leve',
+      pasos:[
+        {t:'Distingue la muda normal', d:'La muda es gradual, simétrica y estacional. Si es repentina, en parches, o el ave se arranca las plumas ella misma, puede ser un problema.'},
+        {t:'Revisa la dieta', d:'Deficiencias de vitaminas (A, E) y minerales causan problemas en plumas. Una dieta solo de semillas es insuficiente — necesita frutas y verduras frescas.'},
+        {t:'Evalúa el ambiente', d:'El aire muy seco, polvo o humos pueden afectar las plumas. Asegúrate de buena ventilación sin corrientes de aire frío directo.'},
+        {t:'Plumas de sangre', d:'Las plumas de sangre (en crecimiento con vaso sanguíneo) que se rompen sangran. Presiona con gasa. Si sigue sangrando, puede necesitar ser extraída por un vet.'},
+        {t:'Autoarranque', d:'Si el ave se arranca las plumas (plucking), puede ser estrés, aburrimiento o enfermedad. Requiere evaluación veterinaria y enriquecimiento ambiental.'},
+      ],
+      vet:'Si la pérdida es repentina, en parches o el ave se arranca plumas activamente, consulta con veterinario aviar.',
+      nivelTexto:'🟢 CONSULTA DE RUTINA'
+    },
+  ],
+  conejo: [
+    {
+      id:'anorexia_conejo', nombre:'No come (anorexia)', icon:'🥕', nivel:'urgente',
+      pasos:[
+        {t:'Urgencia real', d:'Un conejo que no come por más de 4-6 horas puede desarrollar íleo (parálisis intestinal), que es potencialmente fatal. No esperes.'},
+        {t:'Estimula el movimiento', d:'Saca al conejo de la jaula. El movimiento estimula el peristaltismo intestinal. Permítele caminar en un área segura.'},
+        {t:'Masajes abdominales', d:'Masajea suavemente el abdomen en círculos siguiendo el sentido del intestino (izquierda, arriba, derecha, abajo). 5 minutos cada hora.'},
+        {t:'Hidratación', d:'Ofrece agua fresca. Si no bebe, una jeringa sin aguja con agua puede ayudar — 1ml cada vez, muy despacio, en la mejilla, no directo a la garganta.'},
+        {t:'Señales críticas', d:'Abdomen muy hinchado o muy hundido, rechinar de dientes (dolor), posición encorvada, dientes azules o fríos al tacto = emergencia inmediata.'},
+      ],
+      vet:'Un conejo sin comer 6+ horas necesita veterinario. Sin comer 12 horas = emergencia crítica.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'golpe_calor_conejo', nombre:'Golpe de calor', icon:'🌡️', nivel:'urgente',
+      pasos:[
+        {t:'Síntomas', d:'Jadeo rápido, orejas muy rojas y calientes, postración, babeo, convulsiones. Los conejos no toleran temperaturas superiores a 28°C.'},
+        {t:'Enfría las orejas', d:'Las orejas son el principal regulador de temperatura del conejo. Aplica agua fresca (no helada) en las orejas con un paño húmedo.'},
+        {t:'Ambiente fresco', d:'Mueve al conejo a un lugar fresco inmediatamente. Enciende el aire acondicionado o un ventilador. Nunca lo pongas en agua fría.'},
+        {t:'Hidratación', d:'Si está consciente, ofrece agua fresca. No lo fueces a beber. Una jeringa con agua en la mejilla puede ayudar.'},
+        {t:'Traslado', d:'Envuelve en una toalla húmeda fresca (no fría) para el traslado. Mantén el ambiente fresco durante el camino.'},
+      ],
+      vet:'El golpe de calor en conejos es muy grave. Ve al veterinario incluso si parece recuperarse.',
+      nivelTexto:'🔴 URGENCIA MÁXIMA'
+    },
+    {
+      id:'herida_conejo', nombre:'Herida o corte', icon:'🩹', nivel:'moderado',
+      pasos:[
+        {t:'Manejo cuidadoso', d:'Los conejos se estresan mucho con manipulación. Envuélvelo en una toalla como "burrito" para inmovilizarlo sin lastimarle la espalda.'},
+        {t:'Controla sangrado', d:'Presiona con gasa limpia 5-10 minutos. Los conejos tienen piel muy fina que se lastima fácilmente.'},
+        {t:'Limpia la herida', d:'Usa solución salina o agua limpia. La clorhexidina muy diluida es segura. Evita yodo y alcohol.'},
+        {t:'No uses algodón', d:'Las fibras del algodón se adhieren a la herida. Usa solo gasa estéril.'},
+        {t:'Vigila el estrés', d:'El estrés excesivo puede causar shock en conejos. Si el animal está muy asustado, cúbrelo con una tela oscura y minimiza el manejo.'},
+      ],
+      vet:'Las heridas en conejos se infectan rápido. Cualquier herida profunda o mordedura requiere antibióticos veterinarios.',
+      nivelTexto:'🟡 ATENCIÓN EN 24H'
+    },
+  ]
+};
+
+let paEspecieActual = 'perro';
+
+async function initAuxilios() {
+  if (!currentUser) return;
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  const plan = snap.exists() ? (snap.data().plan || 'gratis') : 'gratis';
+
+  if (plan === 'gratis') {
+    document.getElementById('pa-bloqueado').style.display = 'block';
+    document.getElementById('pa-contenido').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('pa-bloqueado').style.display = 'none';
+  document.getElementById('pa-contenido').style.display = 'block';
+  paRenderLista('perro');
+}
+
+window.paSetEspecie = function(especie, btn) {
+  paEspecieActual = especie;
+  document.querySelectorAll('.pa-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  paVolver();
+  paRenderLista(especie);
+};
+
+function paRenderLista(especie) {
+  const nombres = {perro:'Perros',gato:'Gatos',ave:'Aves',conejo:'Conejos'};
+  const emojis = {perro:'🐶',gato:'🐱',ave:'🐦',conejo:'🐰'};
+  document.getElementById('pa-lista-titulo').textContent = `${emojis[especie]} Emergencias en ${nombres[especie]}`;
+
+  const emergencias = PA_DATA[especie] || [];
+  const grid = document.getElementById('pa-emergencias-grid');
+  grid.innerHTML = emergencias.map(e => `
+    <button class="pa-emerg-btn ${e.nivel}" onclick="paMostrarDetalle('${especie}','${e.id}')">
+      <span class="pa-emerg-icon">${e.icon}</span>
+      <div>
+        <div class="pa-emerg-nombre">${e.nombre}</div>
+        <div class="pa-emerg-nivel nivel-${e.nivel}">${e.nivelTexto}</div>
+      </div>
+    </button>`).join('');
+}
+
+window.paMostrarDetalle = function(especie, id) {
+  const e = (PA_DATA[especie] || []).find(x => x.id === id);
+  if (!e) return;
+
+  document.getElementById('pa-lista').style.display = 'none';
+  const detalle = document.getElementById('pa-detalle-wrap');
+  detalle.classList.add('show');
+
+  document.getElementById('pa-detalle-header').className = `pa-detalle-header ${e.nivel}`;
+  document.getElementById('pa-detalle-header').innerHTML = `
+    <div class="pa-detalle-icon">${e.icon}</div>
+    <div>
+      <div class="pa-detalle-titulo">${e.nombre}</div>
+      <div class="pa-detalle-nivel nivel-${e.nivel}">${e.nivelTexto}</div>
+    </div>`;
+
+  document.getElementById('pa-pasos-lista').innerHTML = e.pasos.map((p, i) => `
+    <div class="pa-paso">
+      <div class="pa-paso-num">${i+1}</div>
+      <div class="pa-paso-texto"><strong>${p.t}:</strong> ${p.d}</div>
+    </div>`).join('');
+
+  document.getElementById('pa-alerta-vet-wrap').innerHTML = `
+    <div class="pa-alerta-vet">
+      <div class="pa-alerta-vet-icon">🏥</div>
+      <div class="pa-alerta-vet-texto">${e.vet}</div>
+    </div>`;
+
+  window.scrollTo(0, 0);
+};
+
+window.paVolver = function() {
+  document.getElementById('pa-lista').style.display = 'block';
+  document.getElementById('pa-detalle-wrap').classList.remove('show');
+};
 
 // Detectar ?cartilla=ID en la URL al cargar
 window.addEventListener('load', () => {
