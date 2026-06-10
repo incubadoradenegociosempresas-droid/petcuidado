@@ -371,6 +371,16 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
 .pa-alerta-vet-texto{font-size:.82rem;font-weight:700;color:#c0392b;line-height:1.5;}
 .pa-volver{background:#f5f5f5;color:#555;border:none;border-radius:10px;padding:.55rem 1.2rem;font-weight:800;font-size:.82rem;cursor:pointer;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;}
 .pa-volver:hover{background:#ebebeb;}
+/* CUMPLEAÑOS */
+.cumple-banner{background:linear-gradient(135deg,#FF8FAB,#FF6B6B);border-radius:16px;padding:1.2rem 1.5rem;color:#fff;display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;animation:cumplePop .5s ease;}
+@keyframes cumplePop{0%{transform:scale(.96);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.cumple-banner.pronto{background:linear-gradient(135deg,#FFD93D,#FF9F43);}
+.cumple-emoji{font-size:2.2rem;flex-shrink:0;}
+.cumple-texto{flex:1;}
+.cumple-titulo{font-weight:900;font-size:1rem;margin-bottom:.2rem;}
+.cumple-sub{font-size:.82rem;opacity:.9;font-weight:600;}
+.cumple-badge{background:rgba(255,255,255,.25);padding:.3rem .9rem;border-radius:50px;font-weight:900;font-size:.78rem;white-space:nowrap;}
+
 </style>
 </head>
 <body>
@@ -567,6 +577,9 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
           <div><div class="dash-greeting">Hola, <span id="dashNombre">Usuario</span> 👋</div><div style="font-size:.85rem;color:#888;font-weight:600;">Bienvenido a PetCuidado</div></div>
           <span class="plan-chip chip-gratis" id="dashChip">Plan Gratuito</span>
         </div>
+        <!-- BANNER CUMPLEAÑOS -->
+        <div id="cumple-banner" style="display:none;"></div>
+
         <div class="upgrade-banner" id="upgradeBanner">
           <div style="font-size:2rem;">⭐</div>
           <div><div style="font-weight:900;font-size:1rem;margin-bottom:.3rem;">Desbloquea todas las funciones</div><div style="font-size:.84rem;opacity:.8;">Sube al Plan Básico por $79/mes. Vet IA, alertas ilimitadas y más.</div></div>
@@ -598,6 +611,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
             <div class="form-group"><label class="form-label">Edad (años)</label><input class="form-input" type="number" id="mEdad"></div>
             <div class="form-group"><label class="form-label">Peso (kg)</label><input class="form-input" type="number" step="0.1" id="mPeso"></div>
             <div class="form-group"><label class="form-label">Sexo</label><select class="form-input" id="mSexo"><option value="">Selecciona</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></div>
+            <div class="form-group"><label class="form-label">🎂 Fecha de nacimiento</label><input class="form-input" type="date" id="mFechaNac"></div>
           </div>
           <div style="display:flex;gap:.8rem;margin-top:.5rem;"><button class="add-btn" onclick="saveMascota()">💾 Guardar</button><button class="cancel-btn" onclick="toggleForm('mForm')">Cancelar</button></div>
         </div>
@@ -1100,6 +1114,7 @@ window.loadDashboard = async function() {
   document.getElementById('perfilPlan').value = txt;
   await loadMascotas();
   await loadAlertas();
+  verificarCumpleanios();
 };
 
 // ── MASCOTAS ──
@@ -1170,9 +1185,10 @@ window.saveMascota = async function() {
       edad: parseInt(document.getElementById('mEdad').value) || null,
       peso: parseFloat(document.getElementById('mPeso').value) || null,
       sexo: document.getElementById('mSexo').value || null,
+      fechaNacimiento: document.getElementById('mFechaNac').value || null,
       createdAt: new Date().toISOString()
     });
-    ['mNombre','mRaza','mEdad','mPeso'].forEach(id => document.getElementById(id).value = '');
+    ['mNombre','mRaza','mEdad','mPeso','mFechaNac'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('mEspecie').value = '';
     document.getElementById('mSexo').value = '';
     toggleForm('mForm');
@@ -2380,6 +2396,71 @@ window.paVolver = function() {
   document.getElementById('pa-lista').style.display = 'block';
   document.getElementById('pa-detalle-wrap').classList.remove('show');
 };
+
+// ════════════════════════════════════════════
+// CUMPLEAÑOS AUTOMÁTICO
+// ════════════════════════════════════════════
+
+function verificarCumpleanios() {
+  const banner = document.getElementById('cumple-banner');
+  if (!banner || !userMascotas.length) { banner && (banner.style.display = 'none'); return; }
+
+  const hoy = new Date();
+  const diaHoy = hoy.getMonth() * 100 + hoy.getDate(); // formato MMDD para comparar
+
+  const cumples = [];
+
+  userMascotas.forEach(m => {
+    if (!m.fechaNacimiento) return;
+    const fnac = new Date(m.fechaNacimiento + 'T12:00:00');
+    const diaCumple = fnac.getMonth() * 100 + fnac.getDate();
+
+    // Calcular días de diferencia circular (próximo cumpleaños)
+    const cumpleEsteAnio = new Date(hoy.getFullYear(), fnac.getMonth(), fnac.getDate());
+    if (cumpleEsteAnio < hoy) cumpleEsteAnio.setFullYear(hoy.getFullYear() + 1);
+    const diasRestantes = Math.round((cumpleEsteAnio - hoy) / (1000 * 60 * 60 * 24));
+
+    const emojis = {perro:'🐶',gato:'🐱',ave:'🐦',conejo:'🐰'};
+    const emoji = emojis[m.especie] || '🐾';
+
+    // Calcular edad que cumple
+    const edadNueva = cumpleEsteAnio.getFullYear() - fnac.getFullYear();
+
+    if (diasRestantes === 0) {
+      cumples.push({ m, emoji, diasRestantes, edadNueva, tipo: 'hoy' });
+    } else if (diasRestantes <= 7) {
+      cumples.push({ m, emoji, diasRestantes, edadNueva, tipo: 'pronto' });
+    }
+  });
+
+  if (!cumples.length) { banner.style.display = 'none'; return; }
+
+  // Priorizar los de hoy primero
+  cumples.sort((a, b) => a.diasRestantes - b.diasRestantes);
+
+  const html = cumples.map(c => {
+    const esHoy = c.tipo === 'hoy';
+    const titulo = esHoy
+      ? `🎉 ¡Hoy es el cumpleaños de ${c.m.nombre}!`
+      : `🎂 El cumpleaños de ${c.m.nombre} es en ${c.diasRestantes} día${c.diasRestantes > 1 ? 's' : ''}`;
+    const sub = esHoy
+      ? `¡${c.m.nombre} cumple ${c.edadNueva} año${c.edadNueva !== 1 ? 's' : ''} hoy! 🥳 Dale un mimo especial.`
+      : `Cumple ${c.edadNueva} año${c.edadNueva !== 1 ? 's' : ''}. ¡Prepara algo especial!`;
+    const badge = esHoy ? '🎈 HOY' : `📅 En ${c.diasRestantes} días`;
+
+    return `<div class="cumple-banner ${esHoy ? '' : 'pronto'}">
+      <div class="cumple-emoji">${c.emoji}</div>
+      <div class="cumple-texto">
+        <div class="cumple-titulo">${titulo}</div>
+        <div class="cumple-sub">${sub}</div>
+      </div>
+      <div class="cumple-badge">${badge}</div>
+    </div>`;
+  }).join('');
+
+  banner.innerHTML = html;
+  banner.style.display = 'block';
+}
 
 // Detectar ?cartilla=ID en la URL al cargar
 window.addEventListener('load', () => {
