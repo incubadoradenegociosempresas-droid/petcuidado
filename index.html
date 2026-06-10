@@ -263,13 +263,94 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
   .ham{display:flex;}.nav-links{display:none;}
   .hero-inner{grid-template-columns:1fr;gap:2rem;}
   .hero-visual{grid-template-columns:1fr 1fr;}
-  .dash-layout{flex-direction:column;}
-  .dash-sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:.8rem;gap:.3rem;}
-  .dash-sidebar-footer{display:none;}
-  .dash-nav-item{font-size:.75rem;padding:.5rem .7rem;}
-  .dash-main{padding:1.2rem;}
   .form-grid{grid-template-columns:1fr;}
   .form-full{grid-column:auto;}
+
+  /* ── DASHBOARD MÓVIL ── */
+  .dash-layout{flex-direction:column;}
+  /* Sidebar desktop: oculto en móvil */
+  .dash-sidebar{display:none;}
+  /* Contenido con espacio para barra inferior */
+  .dash-main{padding:1rem 1rem 90px;}
+
+  /* ── BARRA NAVEGACIÓN INFERIOR ── */
+  .mob-bottom-nav{
+    display:flex;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    height:64px;
+    background:#1A1A2E;
+    border-top:1px solid rgba(255,255,255,.08);
+    z-index:300;
+    align-items:stretch;
+  }
+  .mob-nav-btn{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    color:rgba(255,255,255,.45);
+    font-size:.6rem;
+    font-weight:800;
+    cursor:pointer;
+    transition:all .2s;
+    border:none;
+    background:none;
+    padding:0;
+    position:relative;
+  }
+  .mob-nav-btn .mni{font-size:1.35rem;line-height:1;}
+  .mob-nav-btn.active{color:#fff;}
+  .mob-nav-btn.active .mni-wrap{
+    background:var(--morado);
+    border-radius:12px;
+    padding:4px 14px;
+    margin-bottom:1px;
+  }
+  .mni-wrap{padding:4px 14px;margin-bottom:1px;}
+  .mob-nav-btn.bloqueado{opacity:.35;}
+
+  /* Drawer "Más" */
+  .mob-drawer-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:290;
+    backdrop-filter:blur(2px);
+  }
+  .mob-drawer-overlay.open{display:block;}
+  .mob-drawer{
+    position:fixed;
+    bottom:64px;left:0;right:0;
+    background:#1A1A2E;
+    border-radius:20px 20px 0 0;
+    padding:1rem;
+    z-index:295;
+    transform:translateY(100%);
+    transition:transform .28s ease;
+  }
+  .mob-drawer.open{transform:translateY(0);}
+  .mob-drawer-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto .8rem;}
+  .mob-drawer-section{font-size:.65rem;font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.3);padding:.5rem .5rem .3rem;text-transform:uppercase;}
+  .mob-drawer-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.3rem;}
+  .mob-drawer-item{
+    display:flex;align-items:center;gap:.6rem;
+    padding:.65rem .8rem;border-radius:12px;
+    color:rgba(255,255,255,.7);font-weight:700;font-size:.83rem;
+    cursor:pointer;background:rgba(255,255,255,.05);
+    border:none;text-align:left;width:100%;
+  }
+  .mob-drawer-item.active{background:var(--morado);color:#fff;}
+  .mob-drawer-item.bloqueado{opacity:.35;cursor:not-allowed;}
+  .mob-drawer-item .di{font-size:1.1rem;}
+  .mob-drawer-cerrar{
+    width:100%;margin-top:.6rem;padding:.7rem;
+    background:rgba(255,255,255,.06);border:none;
+    border-radius:12px;color:rgba(255,255,255,.5);
+    font-weight:800;font-size:.85rem;cursor:pointer;
+  }
 }
 
 /* VET IA CHAT */
@@ -582,6 +663,53 @@ footer{background:var(--dark);color:rgba(255,255,255,.65);padding:3rem 1.5rem 2r
 
 <!-- DASHBOARD -->
 <div id="page-dashboard" class="page">
+  <!-- BARRA NAVEGACIÓN INFERIOR MÓVIL -->
+  <div class="mob-bottom-nav" id="mobBottomNav" style="display:none;">
+    <button class="mob-nav-btn active" id="mbn-inicio" onclick="goDashMob('inicio','mbn-inicio')">
+      <div class="mni-wrap"><span class="mni">🏠</span></div>
+      <span>Inicio</span>
+    </button>
+    <button class="mob-nav-btn" id="mbn-mascotas" onclick="goDashMob('mascotas','mbn-mascotas')">
+      <div class="mni-wrap"><span class="mni">🐾</span></div>
+      <span>Mascotas</span>
+    </button>
+    <button class="mob-nav-btn" id="mbn-alertas" onclick="goDashMob('alertas','mbn-alertas')">
+      <div class="mni-wrap"><span class="mni">🔔</span></div>
+      <span>Alertas</span>
+    </button>
+    <button class="mob-nav-btn" id="mbn-perfil" onclick="goDashMob('perfil','mbn-perfil')">
+      <div class="mni-wrap"><span class="mni">👤</span></div>
+      <span>Perfil</span>
+    </button>
+    <button class="mob-nav-btn" id="mbn-mas" onclick="abrirDrawer()">
+      <div class="mni-wrap"><span class="mni">☰</span></div>
+      <span>Más</span>
+    </button>
+  </div>
+
+  <!-- DRAWER "MÁS" MÓVIL -->
+  <div class="mob-drawer-overlay" id="mobDrawerOverlay" onclick="cerrarDrawer()"></div>
+  <div class="mob-drawer" id="mobDrawer">
+    <div class="mob-drawer-handle"></div>
+
+    <div class="mob-drawer-section">⭐ Plan Básico</div>
+    <div class="mob-drawer-grid">
+      <button class="mob-drawer-item" id="mdi-historial" onclick="goDashMob('historial','mdi-historial');cerrarDrawer()"><span class="di">📋</span>Historial médico</button>
+      <button class="mob-drawer-item" id="mdi-vetia" onclick="goDashMob('vetia','mdi-vetia');cerrarDrawer()"><span class="di">🩺</span>Vet IA</button>
+      <button class="mob-drawer-item" id="mdi-auxilios" onclick="goDashMob('auxilios','mdi-auxilios');cerrarDrawer()"><span class="di">🆘</span>Primeros Auxilios</button>
+      <button class="mob-drawer-item" id="mdi-cartilla" onclick="goDashMob('cartilla','mdi-cartilla');cerrarDrawer()"><span class="di">📱</span>Cartilla QR</button>
+    </div>
+
+    <div class="mob-drawer-section">👑 Plan Protector</div>
+    <div class="mob-drawer-grid">
+      <button class="mob-drawer-item" id="mdi-alimentacion" onclick="goDashMob('alimentacion','mdi-alimentacion');cerrarDrawer()"><span class="di">🥗</span>Alimentación IA</button>
+      <button class="mob-drawer-item" id="mdi-sintomas" onclick="goDashMob('sintomas','mdi-sintomas');cerrarDrawer()"><span class="di">🔍</span>Síntomas IA</button>
+      <button class="mob-drawer-item" id="mdi-score" onclick="goDashMob('score','mdi-score');cerrarDrawer()"><span class="di">🏥</span>Score de Salud</button>
+    </div>
+
+    <button class="mob-drawer-cerrar" onclick="cerrarDrawer()">✕ Cerrar</button>
+  </div>
+
   <div class="dash-layout">
     <div class="dash-sidebar">
       <!-- PLAN GRATUITO -->
@@ -1154,6 +1282,8 @@ window.loadDashboard = async function() {
   await loadAlertas();
   verificarCumpleanios();
   actualizarMenuPlan(plan);
+  actualizarDrawerPlan(plan);
+  if (esMobil()) mostrarNavMobil(true);
 };
 
 // ── MASCOTAS ──
@@ -1369,6 +1499,8 @@ window.goPage = function(id) {
     const el = document.getElementById('nl-' + p);
     if (el) el.classList.toggle('active', p === id);
   });
+  // Mostrar/ocultar barra móvil
+  if (esMobil()) mostrarNavMobil(id === 'dashboard');
   if (id === 'dashboard' && currentUser) loadDashboard();
 };
 
@@ -2435,6 +2567,61 @@ window.paVolver = function() {
   document.getElementById('pa-lista').style.display = 'block';
   document.getElementById('pa-detalle-wrap').classList.remove('show');
 };
+
+// ════════════════════════════════════════════
+// NAVEGACIÓN MÓVIL
+// ════════════════════════════════════════════
+
+function esMobil() { return window.innerWidth <= 680; }
+
+function mostrarNavMobil(show) {
+  const nav = document.getElementById('mobBottomNav');
+  if (nav) nav.style.display = show ? 'flex' : 'none';
+}
+
+window.goDashMob = function(panel, btnId) {
+  // Usar goDash normal para cambiar el panel
+  goDash(panel, document.getElementById('nav-' + panel) || null);
+
+  // Actualizar estado activo en barra inferior
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mob-drawer-item').forEach(b => b.classList.remove('active'));
+
+  // Activar el botón correcto
+  const mbn = document.getElementById('mbn-' + panel);
+  const mdi = document.getElementById('mdi-' + panel);
+  if (mbn) mbn.classList.add('active');
+  if (mdi) { mdi.classList.add('active'); document.getElementById('mbn-mas')?.classList.add('active'); }
+};
+
+window.abrirDrawer = function() {
+  document.getElementById('mobDrawer').classList.add('open');
+  document.getElementById('mobDrawerOverlay').classList.add('open');
+};
+
+window.cerrarDrawer = function() {
+  document.getElementById('mobDrawer').classList.remove('open');
+  document.getElementById('mobDrawerOverlay').classList.remove('open');
+};
+
+// Actualizar estado bloqueado en drawer según plan
+function actualizarDrawerPlan(plan) {
+  const esBasico    = plan === 'basico' || plan === 'protector' || plan === 'anual';
+  const esProtector = plan === 'protector' || plan === 'anual';
+
+  ['mdi-historial','mdi-vetia','mdi-auxilios','mdi-cartilla'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (esBasico) { el.classList.remove('bloqueado'); el.style.pointerEvents = ''; }
+    else { el.classList.add('bloqueado'); el.style.pointerEvents = 'none'; }
+  });
+  ['mdi-alimentacion','mdi-sintomas','mdi-score'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (esProtector) { el.classList.remove('bloqueado'); el.style.pointerEvents = ''; }
+    else { el.classList.add('bloqueado'); el.style.pointerEvents = 'none'; }
+  });
+}
 
 // ════════════════════════════════════════════
 // MENÚ POR PLAN
