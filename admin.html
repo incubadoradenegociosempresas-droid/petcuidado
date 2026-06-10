@@ -45,6 +45,14 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .tb-notif-icon{font-size:1.2rem;color:rgba(255,255,255,.7);}
 .tb-notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--coral);border-radius:50%;border:2px solid var(--dark);}
 
+/* Menú móvil admin */
+.admin-mob-menu{display:none;position:fixed;top:60px;left:0;right:0;background:var(--dark2);z-index:400;padding:.8rem;flex-direction:column;gap:.3rem;border-bottom:2px solid rgba(255,255,255,.08);}
+.admin-mob-menu.open{display:flex;}
+.admin-mob-item{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;border-radius:10px;color:rgba(255,255,255,.7);font-weight:700;font-size:.9rem;cursor:pointer;}
+.admin-mob-item:hover,.admin-mob-item.active{background:var(--morado);color:#fff;}
+.admin-mob-item .si{font-size:1rem;width:20px;text-align:center;}
+@media(max-width:640px){#adminHam{display:block !important;}}
+
 /* Panel notificaciones */
 .notif-panel{position:absolute;top:52px;right:0;width:320px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:500;display:none;overflow:hidden;}
 .notif-panel.open{display:block;}
@@ -225,9 +233,68 @@ table.tbl{width:100%;border-collapse:collapse;}
 @media(max-width:640px){
   :root{--sidebar:0px;}
   .sidebar{display:none;}
-  .main{padding:1rem;}
+  .main{padding:.8rem;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .tb-name{display:none;}
+
+  /* Topbar móvil */
+  .topbar{padding:0 1rem;}
+  .tb-logo{font-size:1.1rem;}
+
+  /* Tabla usuarios en móvil — scroll horizontal */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tbl th,.tbl td{white-space:nowrap;padding:.6rem .7rem;}
+
+  /* Ocultar columnas menos importantes en móvil */
+  .tbl th:nth-child(5),.tbl td:nth-child(5),
+  .tbl th:nth-child(6),.tbl td:nth-child(6){display:none;}
+
+  /* Toolbar filtros — stack vertical */
+  .toolbar{flex-direction:column;align-items:stretch;}
+  .search-input,.filter-sel{width:100%;}
+
+  /* Cards stats — 2 columnas en móvil */
+  .stats-row[style*="repeat(4"]{grid-template-columns:1fr 1fr !important;}
+
+  /* Botones de acción en tabla */
+  .tbl td .btn{padding:.3rem .6rem;font-size:.72rem;}
+
+  /* Page title */
+  .page-title{font-size:1.2rem;flex-wrap:wrap;gap:.5rem;}
+  .page-title button{font-size:.75rem;}
+
+  /* Modal — pantalla completa en móvil */
+  .modal-overlay{padding:.5rem;align-items:flex-end;}
+  .modal{
+    border-radius:20px 20px 0 0;
+    max-height:92vh;
+    padding:1.5rem 1.2rem;
+    max-width:100% !important;
+    width:100%;
+  }
+  .modal-title{font-size:1.1rem;}
+  .m-row{grid-template-columns:1fr;}
+  .m-input,.nota-input{font-size:.9rem;}
+
+  /* Botones del modal */
+  .modal .btn{padding:.5rem .9rem;font-size:.8rem;}
+
+  /* Grid 2 col del modal nuevo usuario */
+  .m-row .m-field{grid-column:auto;}
+
+  /* Cards */
+  .card{padding:1rem;}
+  .card-title{font-size:.88rem;flex-wrap:wrap;gap:.4rem;}
+
+  /* MRR big */
+  .mrr-big{font-size:2.2rem;}
+  .mrr-meta{gap:1rem;}
+
+  /* Gráficas más pequeñas */
+  .chart-wrap{height:180px;}
+
+  /* Panel notif */
+  .notif-panel{width:calc(100vw - 2rem);right:-1rem;}
 }
 </style>
 </head>
@@ -254,6 +321,8 @@ table.tbl{width:100%;border-collapse:collapse;}
   <div class="topbar">
     <div class="tb-logo">🐾 Pet<span>Cuidado</span><span class="tb-badge">ADMIN</span></div>
     <div class="tb-right">
+      <!-- Hamburguesa solo en móvil -->
+      <div id="adminHam" onclick="toggleAdminMenu()" style="display:none;cursor:pointer;padding:6px;color:rgba(255,255,255,.7);font-size:1.3rem;">☰</div>
       <div class="tb-notif" onclick="toggleNotifPanel()" style="position:relative;">
         <div class="tb-notif-icon">🔔</div>
         <div class="tb-notif-dot" id="notif-dot" style="display:none;"></div>
@@ -275,6 +344,15 @@ table.tbl{width:100%;border-collapse:collapse;}
       </div>
       <div class="tb-logout" onclick="doLogout()">Salir</div>
     </div>
+  </div>
+
+  <!-- MENÚ MÓVIL ADMIN -->
+  <div class="admin-mob-menu" id="adminMobMenu">
+    <div class="admin-mob-item" onclick="goPanelMob('resumen')"><span class="si">📊</span>Resumen</div>
+    <div class="admin-mob-item" onclick="goPanelMob('usuarios')"><span class="si">👥</span>Usuarios</div>
+    <div class="admin-mob-item" onclick="goPanelMob('pagos')"><span class="si">💰</span>Pagos</div>
+    <div class="admin-mob-item" onclick="goPanelMob('ingresos')"><span class="si">📈</span>Ingresos</div>
+    <div class="admin-mob-item" onclick="goPanelMob('actividad')"><span class="si">⚡</span>Actividad</div>
   </div>
 
   <div class="app-body">
@@ -744,7 +822,24 @@ window.goPanel = function(id, el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.s-item').forEach(i => i.classList.remove('active'));
   if(el) el.classList.add('active');
+  // Actualizar estado activo en menú móvil
+  document.querySelectorAll('.admin-mob-item').forEach(i => i.classList.remove('active'));
+  const mobItem = document.querySelector(`.admin-mob-item[onclick*="${id}"]`);
+  if(mobItem) mobItem.classList.add('active');
   if(id==='ingresos') setTimeout(initCharts2, 100);
+};
+
+window.toggleAdminMenu = function() {
+  document.getElementById('adminMobMenu').classList.toggle('open');
+};
+
+window.goPanelMob = function(id) {
+  // Encontrar el s-item del sidebar correspondiente
+  const sItems = document.querySelectorAll('.s-item');
+  let found = null;
+  sItems.forEach(el => { if(el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+id+"'")) found = el; });
+  window.goPanel(id, found);
+  document.getElementById('adminMobMenu').classList.remove('open');
 };
 
 // ── RENDER USUARIOS ──
