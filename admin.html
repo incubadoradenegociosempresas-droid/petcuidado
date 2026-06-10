@@ -44,6 +44,27 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .tb-notif{position:relative;cursor:pointer;}
 .tb-notif-icon{font-size:1.2rem;color:rgba(255,255,255,.7);}
 .tb-notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--coral);border-radius:50%;border:2px solid var(--dark);}
+
+/* Panel notificaciones */
+.notif-panel{position:absolute;top:52px;right:0;width:320px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:500;display:none;overflow:hidden;}
+.notif-panel.open{display:block;}
+.notif-header{padding:.9rem 1.1rem;font-weight:900;font-size:.88rem;color:#1A1A2E;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;}
+.notif-clear{font-size:.75rem;color:var(--morado);cursor:pointer;font-weight:800;}
+.notif-clear:hover{text-decoration:underline;}
+.notif-list{max-height:320px;overflow-y:auto;}
+.notif-item{display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1.1rem;border-bottom:1px solid #f8f8f8;cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:#fafafa;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:#fdf8ff;}
+.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.ni-pago{background:rgba(0,212,170,.12);}
+.ni-user{background:rgba(124,58,237,.12);}
+.ni-warn{background:rgba(255,107,107,.12);}
+.notif-texto{flex:1;}
+.notif-titulo{font-size:.83rem;font-weight:800;color:#1A1A2E;}
+.notif-sub{font-size:.75rem;color:#aaa;font-weight:600;margin-top:.1rem;}
+.notif-empty{padding:1.5rem;text-align:center;color:#ccc;font-size:.85rem;font-weight:700;}
+.notif-badge{background:var(--coral);color:#fff;font-size:.62rem;font-weight:900;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;}
 .tb-user{display:flex;align-items:center;gap:.6rem;cursor:pointer;}
 .tb-avatar{width:34px;height:34px;border-radius:50%;background:var(--morado);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#fff;}
 .tb-name{color:rgba(255,255,255,.8);font-weight:700;font-size:.85rem;}
@@ -232,9 +253,20 @@ table.tbl{width:100%;border-collapse:collapse;}
   <div class="topbar">
     <div class="tb-logo">🐾 Pet<span>Cuidado</span><span class="tb-badge">ADMIN</span></div>
     <div class="tb-right">
-      <div class="tb-notif">
+      <div class="tb-notif" onclick="toggleNotifPanel()" style="position:relative;">
         <div class="tb-notif-icon">🔔</div>
-        <div class="tb-notif-dot"></div>
+        <div class="tb-notif-dot" id="notif-dot" style="display:none;"></div>
+        <span class="notif-badge" id="notif-count" style="display:none;position:absolute;top:-6px;right:-8px;"></span>
+        <!-- PANEL -->
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-header">
+            🔔 Notificaciones
+            <span class="notif-clear" onclick="marcarTodasLeidas(event)">Marcar todas como leídas</span>
+          </div>
+          <div class="notif-list" id="notifList">
+            <div class="notif-empty">Sin notificaciones</div>
+          </div>
+        </div>
       </div>
       <div class="tb-user">
         <div class="tb-avatar">JM</div>
@@ -631,6 +663,7 @@ async function loadData(){
     renderActividad();
     updateSummaryStats();
     initCharts();
+    renderNotifPanel();
     showToast('success',`✅ ${users.length} usuario(s) cargado(s) desde Firebase`);
   } catch(err){
     console.error(err);
@@ -1028,6 +1061,116 @@ function showToast(type,msg){ window.showToast(type,msg); }
 
 document.getElementById('userModal').addEventListener('click', e => {
   if(e.target === document.getElementById('userModal')) window.closeModal();
+});
+
+// ── NOTIFICACIONES ──
+let notifsLeidas = new Set(JSON.parse(localStorage.getItem('notifs_leidas') || '[]'));
+
+function generarNotificaciones() {
+  const notifs = [];
+
+  // Pagos pendientes
+  pagosHist.filter(p => p.status === 'pendiente').forEach(p => {
+    notifs.push({
+      id: 'pago-' + p.id,
+      icon: '💰', cls: 'ni-pago',
+      titulo: `Pago pendiente · ${p.nombre}`,
+      sub: `$${p.monto} · Plan ${planNames[p.plan]||p.plan}`,
+      accion: () => window.goPanel('pagos', document.querySelector('.s-item:nth-child(3)'))
+    });
+  });
+
+  // Usuarios nuevos (últimos 3 días)
+  const hace3dias = new Date();
+  hace3dias.setDate(hace3dias.getDate() - 3);
+  users.filter(u => {
+    const f = new Date(u.fecha);
+    return !isNaN(f) && f >= hace3dias;
+  }).forEach(u => {
+    notifs.push({
+      id: 'user-' + u.id,
+      icon: '👤', cls: 'ni-user',
+      titulo: `Nuevo usuario · ${u.nombre}`,
+      sub: `Plan ${planNames[u.plan]||u.plan} · ${u.fecha}`,
+      accion: () => window.goPanel('usuarios', document.querySelector('.s-item:nth-child(2)'))
+    });
+  });
+
+  // Usuarios bloqueados
+  users.filter(u => u.status === 'bloqueado').forEach(u => {
+    notifs.push({
+      id: 'bloq-' + u.id,
+      icon: '🚫', cls: 'ni-warn',
+      titulo: `Usuario bloqueado · ${u.nombre}`,
+      sub: u.email,
+      accion: () => window.goPanel('usuarios', document.querySelector('.s-item:nth-child(2)'))
+    });
+  });
+
+  return notifs;
+}
+
+function renderNotifPanel() {
+  const notifs = generarNotificaciones();
+  const list = document.getElementById('notifList');
+  const dot = document.getElementById('notif-dot');
+  const badge = document.getElementById('notif-count');
+  const noLeidas = notifs.filter(n => !notifsLeidas.has(n.id));
+
+  if (noLeidas.length > 0) {
+    dot.style.display = 'block';
+    badge.style.display = 'block';
+    badge.textContent = noLeidas.length;
+  } else {
+    dot.style.display = 'none';
+    badge.style.display = 'none';
+  }
+
+  if (!notifs.length) {
+    list.innerHTML = '<div class="notif-empty">✅ Sin notificaciones pendientes</div>';
+    return;
+  }
+
+  list.innerHTML = notifs.map(n => `
+    <div class="notif-item ${notifsLeidas.has(n.id) ? '' : 'unread'}" onclick="clickNotif('${n.id}')">
+      <div class="notif-icon ${n.cls}">${n.icon}</div>
+      <div class="notif-texto">
+        <div class="notif-titulo">${n.titulo}</div>
+        <div class="notif-sub">${n.sub}</div>
+      </div>
+    </div>`).join('');
+}
+
+window.toggleNotifPanel = function() {
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) renderNotifPanel();
+};
+
+window.clickNotif = function(id) {
+  notifsLeidas.add(id);
+  localStorage.setItem('notifs_leidas', JSON.stringify([...notifsLeidas]));
+  renderNotifPanel();
+  // Ejecutar acción asociada
+  const notifs = generarNotificaciones();
+  const n = notifs.find(x => x.id === id);
+  if (n) { n.accion(); document.getElementById('notifPanel').classList.remove('open'); }
+};
+
+window.marcarTodasLeidas = function(e) {
+  e.stopPropagation();
+  generarNotificaciones().forEach(n => notifsLeidas.add(n.id));
+  localStorage.setItem('notifs_leidas', JSON.stringify([...notifsLeidas]));
+  renderNotifPanel();
+};
+
+// Cerrar panel al hacer clic fuera
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  const notifBtn = panel?.closest('.tb-notif');
+  if (panel && panel.classList.contains('open') && !notifBtn?.contains(e.target)) {
+    panel.classList.remove('open');
+  }
 });
 </script>
 </body>
