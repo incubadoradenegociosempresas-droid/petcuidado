@@ -296,7 +296,7 @@ table.tbl{width:100%;border-collapse:collapse;}
           </div>
           <div class="stat-card sc-naranja">
             <span class="stat-icon">📈</span>
-            <div class="stat-val">$5,004</div>
+            <div class="stat-val" id="s-arr">$0</div>
             <div class="stat-label">ARR proyectado</div>
             <div class="stat-change change-up">↑ Basado en MRR actual</div>
           </div>
@@ -319,9 +319,9 @@ table.tbl{width:100%;border-collapse:collapse;}
             <div class="card-title"><div class="card-title-left">🥧 Distribución de planes</div></div>
             <div class="chart-wrap"><canvas id="chartPlanes"></canvas></div>
             <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.5rem;">
-              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🔴 Gratuito</span><span style="color:#aaa;">3 usuarios</span></div>
-              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟢 Básico</span><span style="color:#aaa;">1 usuario · $79</span></div>
-              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟣 Protector</span><span style="color:#aaa;">2 usuarios · $338</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🔴 Gratuito</span><span style="color:#aaa;" id="dist-gratis">—</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟢 Básico</span><span style="color:#aaa;" id="dist-basico">—</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;"><span>🟣 Protector</span><span style="color:#aaa;" id="dist-protector">—</span></div>
             </div>
           </div>
         </div>
@@ -330,28 +330,22 @@ table.tbl{width:100%;border-collapse:collapse;}
           <!-- ACTIVIDAD RECIENTE -->
           <div class="card">
             <div class="card-title"><div class="card-title-left">⚡ Actividad reciente</div><button class="btn btn-ghost btn-sm" onclick="goPanel('actividad',document.querySelector('.s-item:nth-child(7)'))">Ver todo</button></div>
-            <div id="actFeed">
-              <div class="activity-item"><div class="act-icon act-i-green">💰</div><div class="act-text"><div class="act-main">Pago confirmado · Carlos Ruiz</div><div class="act-sub">Plan Básico $79 activado</div></div><div class="act-time">hace 1h</div></div>
-              <div class="activity-item"><div class="act-icon act-i-blue">👤</div><div class="act-text"><div class="act-main">Nuevo registro · María López</div><div class="act-sub">Plan Gratuito</div></div><div class="act-time">hace 3h</div></div>
-              <div class="activity-item"><div class="act-icon act-i-orange">⭐</div><div class="act-text"><div class="act-main">Transferencia recibida · Ana M.</div><div class="act-sub">$169 · Plan Protector · Pendiente</div></div><div class="act-time">hace 5h</div></div>
-              <div class="activity-item"><div class="act-icon act-i-blue">👤</div><div class="act-text"><div class="act-main">Nuevo registro · Pedro Soto</div><div class="act-sub">Plan Gratuito</div></div><div class="act-time">ayer</div></div>
-              <div class="activity-item"><div class="act-icon act-i-green">💰</div><div class="act-text"><div class="act-main">Pago confirmado · Laura V.</div><div class="act-sub">Plan Protector $169 activado</div></div><div class="act-time">ayer</div></div>
-            </div>
+            <div id="actFeed"><div style="color:#aaa;font-size:.85rem;padding:.5rem;">Cargando...</div></div>
           </div>
           <!-- MRR DETALLE -->
           <div class="card">
             <div class="card-title"><div class="card-title-left">💎 Ingresos del mes</div></div>
-            <div class="mrr-big">$417</div>
-            <div class="mrr-sub">MRR Junio 2026</div>
+            <div class="mrr-big" id="mrr-big-num">$0</div>
+            <div class="mrr-sub" id="mrr-mes-label">MRR actual</div>
             <div class="mrr-meta">
-              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--turquesa);">$79</div><div class="mrr-meta-label">Plan Básico</div></div>
-              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--morado);">$338</div><div class="mrr-meta-label">Plan Protector</div></div>
+              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--turquesa);" id="mrr-basico">$0</div><div class="mrr-meta-label">Plan Básico</div></div>
+              <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--morado);" id="mrr-protector">$0</div><div class="mrr-meta-label">Plan Protector</div></div>
               <div class="mrr-meta-item"><div class="mrr-meta-val" style="color:var(--coral);">$0</div><div class="mrr-meta-label">Gratuito</div></div>
             </div>
             <div class="m-divider"></div>
             <div style="font-size:.82rem;font-weight:700;color:#888;margin-bottom:.6rem;">Objetivo mes: $1,000 MRR</div>
-            <div class="progress-wrap"><div class="progress-bar" style="width:41.7%;background:linear-gradient(90deg,var(--morado),var(--turquesa));"></div></div>
-            <div style="font-size:.75rem;color:#aaa;font-weight:700;margin-top:.4rem;">41.7% del objetivo</div>
+            <div class="progress-wrap"><div class="progress-bar" id="mrr-progress-bar" style="width:0%;background:linear-gradient(90deg,var(--morado),var(--turquesa));"></div></div>
+            <div style="font-size:.75rem;color:#aaa;font-weight:700;margin-top:.4rem;" id="mrr-progress-txt">0% del objetivo</div>
             <div class="m-divider"></div>
             <div style="font-size:.82rem;font-weight:700;color:#888;">Necesitas: <strong style="color:var(--morado);">7 usuarios Básico</strong> o <strong style="color:var(--morado);">4 Protector</strong> para llegar a $1,000 MRR</div>
           </div>
@@ -401,10 +395,10 @@ table.tbl{width:100%;border-collapse:collapse;}
       <div id="panel-pagos" class="panel">
         <div class="page-title">💰 Control de pagos</div>
         <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
-          <div class="stat-card sc-morado"><span class="stat-icon">💰</span><div class="stat-val">$417</div><div class="stat-label">Cobrado en junio</div></div>
-          <div class="stat-card sc-amarillo"><span class="stat-icon">⏳</span><div class="stat-val" id="pendCount">2</div><div class="stat-label">Pagos pendientes</div></div>
-          <div class="stat-card sc-turquesa"><span class="stat-icon">✅</span><div class="stat-val">3</div><div class="stat-label">Pagos confirmados</div></div>
-          <div class="stat-card sc-coral"><span class="stat-icon">📅</span><div class="stat-val">5</div><div class="stat-label">Total transacciones</div></div>
+          <div class="stat-card sc-morado"><span class="stat-icon">💰</span><div class="stat-val" id="pagos-mrr">$0</div><div class="stat-label">MRR actual</div></div>
+          <div class="stat-card sc-amarillo"><span class="stat-icon">⏳</span><div class="stat-val" id="pendCount">0</div><div class="stat-label">Pagos pendientes</div></div>
+          <div class="stat-card sc-turquesa"><span class="stat-icon">✅</span><div class="stat-val" id="pagos-conf">0</div><div class="stat-label">Pagos confirmados</div></div>
+          <div class="stat-card sc-coral"><span class="stat-icon">📅</span><div class="stat-val" id="pagos-total">0</div><div class="stat-label">Total transacciones</div></div>
         </div>
 
         <!-- PENDIENTES -->
@@ -453,7 +447,7 @@ table.tbl{width:100%;border-collapse:collapse;}
             <table class="tbl">
               <thead><tr><th>Escenario</th><th>Usuarios</th><th>MRR</th><th>ARR</th></tr></thead>
               <tbody>
-                <tr><td><span class="badge b-g">Actual</span></td><td>6</td><td>$417</td><td>$5,004</td></tr>
+                <tr id="escenario-actual"><td><span class="badge b-g">Actual</span></td><td id="esc-usuarios">—</td><td id="esc-mrr">—</td><td id="esc-arr">—</td></tr>
                 <tr><td><span class="badge b-b">Conservador</span></td><td>30</td><td>$2,850</td><td>$34,200</td></tr>
                 <tr><td><span class="badge b-p">Moderado</span></td><td>100</td><td>$9,500</td><td>$114,000</td></tr>
                 <tr><td><span class="badge b-a">Optimista</span></td><td>300</td><td>$28,500</td><td>$342,000</td></tr>
@@ -902,13 +896,58 @@ function renderActividad(){
 // ── STATS ──
 function updateSummaryStats(){
   const mrr = users.reduce((acc,u)=> acc + (planMRR[u.plan]||0), 0);
+  const arr = mrr * 12;
   const pend = pagosHist.filter(p=>p.status==='pendiente').length;
-  document.getElementById('s-total').textContent = users.length;
-  document.getElementById('s-gratis').textContent = users.filter(u=>u.plan==='gratis').length;
-  document.getElementById('s-mrr').textContent = '$'+mrr;
-  document.getElementById('s-pagos').textContent = pend;
+  const conf = pagosHist.filter(p=>p.status==='confirmado').length;
+  const total = pagosHist.length;
+  const nGratis    = users.filter(u=>u.plan==='gratis').length;
+  const nBasico    = users.filter(u=>u.plan==='basico').length;
+  const nProtector = users.filter(u=>u.plan==='protector'||u.plan==='anual').length;
+  const mrrBasico    = nBasico * 79;
+  const mrrProtector = nProtector * 169;
+  const pctObjetivo  = Math.min(100, Math.round((mrr/1000)*100));
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesActual = meses[new Date().getMonth()];
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  // Resumen
+  set('s-total', users.length);
+  set('s-gratis', nGratis);
+  set('s-mrr', '$'+mrr);
+  set('s-arr', '$'+arr.toLocaleString());
+  set('s-pagos', pend);
+
+  // Distribución de planes
+  set('dist-gratis',    nGratis + ' usuario'+(nGratis!==1?'s':''));
+  set('dist-basico',    nBasico + ' usuario'+(nBasico!==1?'s':'') + (nBasico>0?' · $'+mrrBasico:''));
+  set('dist-protector', nProtector + ' usuario'+(nProtector!==1?'s':'') + (nProtector>0?' · $'+mrrProtector:''));
+
+  // MRR detalle
+  set('mrr-big-num',    '$'+mrr);
+  set('mrr-mes-label',  'MRR ' + mesActual + ' ' + new Date().getFullYear());
+  set('mrr-basico',     '$'+mrrBasico);
+  set('mrr-protector',  '$'+mrrProtector);
+  const bar = document.getElementById('mrr-progress-bar');
+  if(bar) bar.style.width = pctObjetivo + '%';
+  set('mrr-progress-txt', pctObjetivo + '% del objetivo');
+
+  // Pagos
+  set('pagos-mrr',   '$'+mrr);
+  set('pagos-conf',  conf);
+  set('pagos-total', total);
   const pagosBadge = document.getElementById('pagosBadge');
   if(pagosBadge) pagosBadge.textContent = pend;
+  const pendCount = document.getElementById('pendCount');
+  if(pendCount) pendCount.textContent = pend;
+  const pendBadge = document.getElementById('pendBadge');
+  if(pendBadge) pendBadge.textContent = pend + ' pendiente'+(pend!==1?'s':'');
+
+  // Escenarios
+  set('esc-usuarios', users.length);
+  set('esc-mrr', '$'+mrr);
+  set('esc-arr', '$'+arr.toLocaleString());
+
   updateCharts(mrr);
 }
 
